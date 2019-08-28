@@ -7,9 +7,9 @@ A container-based hosted DNSSEC service
 
 ## Docker Compose PoC ##
 Three implementation have been tested:
-* `PowerDNS` as signer with other authoritative DNS servers (bind, nsd). `dnspython` is used to retrived signed zone. More details [here](01-PoC-PowerDNS)
-* `OpenDNNSEC` as signer (using DNS adapter) with other authoritative DNS servers (bind, nsd, pdns). `knot` is used to retrived signed zone. See next implementation.
-* Same as previous one with MySQL backend for OpenDNSSEC Enforcer. More details [here](02-PoC-OpenDNSSEC).
+* `PowerDNS` as signer with other authoritative DNS servers (bind, nsd). `dnspython` is used to retrived signed zone. More details [here](01-compose/01-PoC-PowerDNS)
+* `OpenDNSSEC` as signer (using DNS adapter) with other authoritative DNS servers (bind, nsd, pdns). `knot` is used to retrived signed zone. See next implementation.
+* Same as previous one with MySQL backend for OpenDNSSEC Enforcer. More details [here](01-compose/02-PoC-OpenDNSSEC).
 
 ## Kubernetes PoC ##
 
