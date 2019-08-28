@@ -1,0 +1,21 @@
+$TTL 60
+
+@ IN SOA ns1.bind.tld. hostmaster.bind.tld. (
+             2019061111
+             7200
+             3600
+             604800
+             43200 )
+
+  IN NS      ns1.bind.tld.
+  IN NS      ns2.bind.tld.
+
+  IN MX 10   mail.bind.tld.
+
+bind.tld.     IN A 30.30.30.30
+ns1  	      IN A 172.16.10.6
+ns2           IN A 172.16.10.10
+
+mail	      IN A 140.140.140.140
+www           IN CNAME bind.tld.
+@	      IN TXT "Zone data for bind.tld"

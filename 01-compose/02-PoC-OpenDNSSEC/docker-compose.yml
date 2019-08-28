@@ -1,0 +1,149 @@
+version: '2.2'
+services:
+  nsd_authoritative:
+    build:
+      dockerfile: Dockerfile
+      context: nsd
+    container_name: nsd_in
+    hostname: nsd_authoritative
+    volumes:
+      - ./etc/nsd/conf:/etc/nsd
+      - ./etc/nsd/zones:/zones
+      - nsd_db:/var/db/nsd
+    healthcheck:
+     test: ["CMD", "nsd-control", "status"]
+     timeout: 10s
+     retries: 5
+    networks:
+     dns_net:
+       ipv4_address: 172.16.10.5
+    depends_on:
+      bind_authoritative:
+        condition: service_healthy
+
+  bind_authoritative:
+    build:
+      dockerfile: Dockerfile
+      context: bind
+    container_name: bind_in
+    hostname: bind_authoritative
+    volumes:
+      - ./etc/bind/conf:/etc/bind
+      - ./etc/bind/zones:/var/cache/bind
+    healthcheck:
+      test: ["CMD", "rndc" ,"status"]
+      timeout: 10s
+      retries: 5
+    networks:
+     dns_net:
+       ipv4_address: 172.16.10.6
+
+  pdns_authoritative:
+    build:
+      dockerfile: Dockerfile
+      context: pdns
+    hostname: pdns_authoritative
+    container_name: pdns_in
+    volumes:
+      - ./etc/pdns/powerdns:/etc/powerdns
+      - pdns_authoritative:/etc/powerdns/conf.d
+    networks:
+     dns_net:
+       ipv4_address: 172.16.10.7
+    environment:
+      - PDNS_API_KEY=${PDNS_API_KEY}
+      - PDNS_WEBSERVER_ADDRESS=${PDNS_WEBSERVER_ADDRESS}
+      - PDNS_WEBSERVER_ALLOW_FROM=${PDNS_WEBSERVER_ALLOW_FROM}
+    healthcheck:
+      test: ["CMD", "pdns_control" ,"ping"]
+      timeout: 10s
+      retries: 5
+    depends_on:
+      nsd_authoritative:
+        condition: service_healthy
+
+  shared_mysql:
+    image: mysql/mysql-server:5.7
+    hostname: shared_mysql
+    container_name: shared_mysql
+    mem_limit: 256M
+    memswap_limit: 256M
+    expose:
+      - 3306
+    volumes:
+      - shared_mysql_data:/var/lib/mysql
+    networks:
+     dns_net:
+       ipv4_address: 172.16.10.33
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DB_NAME}
+      - MYSQL_USER=${MYSQL_DB_USER}
+      - MYSQL_PASSWORD=${MYSQL_DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 5
+    depends_on:
+      pdns_authoritative:
+        condition: service_healthy
+
+  opendnssec:
+    build:
+      dockerfile: Dockerfile
+      context: opendnssec
+    container_name: signer
+    hostname: opendnssec
+    volumes:
+      -  ./etc/opendnssec:/etc/opendnssec
+    environment:
+      - MYSQL_HOST=${MYSQL_DB_HOST}
+      - MYSQL_USER=${MYSQL_DB_USER}
+      - MYSQL_PASS=${MYSQL_DB_PASSWORD}
+      - MYSQL_DB=${MYSQL_DB_NAME}
+      - MYSQL_PORT=3306
+      - SHM_LABEL=${SHM_LABEL}
+      - SHM_PIN=${SHM_PIN}
+      - SHM_SO_PIN=${SHM_SO_PIN}
+    healthcheck:
+      test: ["CMD", "ods-enforcer", "running"]
+      timeout: 10s
+      retries: 5
+    networks:
+     dns_net:
+        ipv4_address: 172.16.10.53
+    depends_on:
+      shared_mysql:
+        condition: service_healthy
+
+  knot_authoritative:
+    image: cznic/knot:2.7
+    container_name: knot_out
+    hostname: knot_authoritative
+    volumes:
+      - ./etc/knot/storage:/storage
+      - ./etc/knot/config:/config
+      - ./etc/knot/rundir:/rundir
+    command: /bin/bash -c "knotd -c /config/knot.conf"
+    healthcheck:
+      test: ["CMD", "knotc", "status"]
+      timeout: 10s
+      retries: 5
+    networks:
+     dns_net:
+       ipv4_address: 172.16.10.10
+    depends_on:
+      opendnssec:
+        condition: service_healthy
+
+volumes:
+  nsd_db:
+  shared_mysql_data:
+  pdns_authoritative:
+
+networks:
+  dns_net:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 172.16.10.0/24
+         gateway: 172.16.10.1

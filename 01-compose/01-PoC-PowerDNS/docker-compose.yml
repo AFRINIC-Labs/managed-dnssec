@@ -1,0 +1,148 @@
+version: '2.2'
+services:
+  nsd_authoritative:
+    build:
+      dockerfile: Dockerfile
+      context: nsd
+    container_name: nsd_authoritative
+    hostname: nsd_authoritative
+    volumes:
+      - ./etc/nsd/conf:/etc/nsd
+      - ./etc/nsd/zones:/zones
+      - nsd_db:/var/db/nsd
+    healthcheck:
+     test: ["CMD", "nsd-control", "status"]
+     timeout: 10s
+     retries: 5
+    networks:
+     dns_net:
+       ipv4_address: 172.16.10.5
+    depends_on:
+      pdns_slave:
+        condition: service_healthy
+
+  bind_authoritative:
+    build: 
+      dockerfile: Dockerfile
+      context: bind
+    container_name: bind_authoritative
+    hostname: bind_authoritative
+    volumes:
+      - ./etc/bind/conf:/etc/bind
+      - ./etc/bind/zones:/var/cache/bind
+    depends_on:
+        nsd_authoritative:
+           condition: service_healthy
+    healthcheck:
+      test: ["CMD", "rndc" ,"status"]
+      timeout: 10s
+      retries: 5
+    networks:
+     dns_net:
+       ipv4_address: 172.16.10.6
+
+  shared_mysql:
+    image: mysql/mysql-server:5.7
+    hostname: shared_mysql
+    container_name: shared_mysql
+    mem_limit: 256M
+    memswap_limit: 256M
+    expose:
+      - 3306
+    volumes:
+      - shared_mysql_data:/var/lib/mysql
+    networks:
+     dns_net:
+       ipv4_address: 172.16.10.33
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DB_NAME}
+      - MYSQL_USER=${MYSQL_DB_USER}
+      - MYSQL_PASSWORD=${MYSQL_DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 5
+
+  pdns_slave:
+    build:
+      dockerfile: Dockerfile
+      context: pdns_slave
+    hostname: pdns_slave
+    container_name: pdns_slave
+    volumes:
+      - ./etc/pdns_slave:/etc/pdns
+      - pdns_slave:/etc/pdns/conf.d
+    networks:
+     dns_net:
+       ipv4_address: 172.16.10.35
+    environment:
+      - MYSQL_HOST=${MYSQL_DB_HOST}
+      - MYSQL_USER=${MYSQL_DB_USER}
+      - MYSQL_PASS=${MYSQL_DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "pdns_control" ,"ping"]
+      timeout: 15s
+      retries: 5
+    depends_on:
+      shared_mysql:
+        condition: service_healthy
+
+  pdns_authoritative:
+    build:
+      dockerfile: Dockerfile
+      context: pdns_authoritative
+    hostname: pdns_authoritative
+    container_name: pdns_authoritative
+    volumes:
+      - pdns_authoritative:/etc/powerdns/conf.d
+      - ./etc/pdns_authoritative/powerdns:/etc/powerdns
+    networks:
+     dns_net:
+       ipv4_address: 172.16.10.53
+    environment:
+      - MYSQL_HOST=${MYSQL_DB_HOST}
+      - MYSQL_USER=${MYSQL_DB_USER}
+      - MYSQL_PASS=${MYSQL_DB_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DB_NAME}
+      - PDNS_API_KEY=${PDNS_API_KEY}
+      - PDNS_WEBSERVER_ADDRESS=${PDNS_WEBSERVER_ADDRESS}
+      - PDNS_WEBSERVER_ALLOW_FROM=${PDNS_WEBSERVER_ALLOW_FROM}
+    healthcheck:
+      test: ["CMD", "pdns_control" ,"ping"]
+      timeout: 10s
+      retries: 5
+    depends_on:
+      bind_authoritative:
+        condition: service_healthy
+
+  dns_api:
+    build:
+      dockerfile: Dockerfile
+      context: dnspython
+    container_name: dns_api
+    hostname: dns_api
+    environment:
+      - PDNS_API_KEY=${PDNS_API_KEY}
+      - PDNS_MASTER_ADDRESS=${PDNS_MASTER_ADDRESS}
+    volumes:
+      - ./dnspython/app:/usr/src/app
+    networks:
+     dns_net:
+       ipv4_address: 172.16.10.10
+    depends_on:
+      pdns_authoritative:
+        condition: service_healthy
+
+volumes:
+  nsd_db:
+  shared_mysql_data:
+  pdns_slave:
+  pdns_authoritative:
+
+networks:
+  dns_net:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 172.16.10.0/24
+         gateway: 172.16.10.1
