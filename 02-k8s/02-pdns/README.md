@@ -37,11 +37,11 @@ kubectl get pod,svc,pv,pvc,configmap,secret -n customer-01
 ### Next Steps ###
 1. Configure master DNS server to allow zone transfert using TSIGKeys (AXFR Out)
 2. Use PowerDNS API [doc](https://doc.powerdns.com/authoritative/http-api/index.html) to:
-..* Create TSIGKeys (for AXFR In and Out)
-..* Create Slave zones
-..* Assign TSIGKeys (AXFR In) to slave zones
-..* Change zones to type master
-..* Assign TSIGKeys (AXFR Out) to master zones
-..* Create DNSSEC Cryptokeys
-..* Sign zones
+ - Create TSIGKeys (for AXFR In and Out)
+ - Create Slave zones
+ - Assign TSIGKeys (AXFR In) to slave zones
+ - Change zones to type master
+ - Assign TSIGKeys (AXFR Out) to master zones
+ - Create DNSSEC Cryptokeys
+ - Sign zones
 3. Configure slave DNS server to request signed zone using TSIGKeys (AXFR Out)

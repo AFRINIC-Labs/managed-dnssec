@@ -38,8 +38,8 @@ kubectl get pod,svc,pv,pvc,configmap,secret -n customer-01
 ### Next Steps ###
 1. Configure master DNS server to allow zone transfert using TSIGKeys (AXFR Out)
 2. Use Signer API Endpoints to:
-..* Create TSIGKeys (for AXFR In and Out)
-..* Create signing policy
-..* Add zones using DNS adapter and created policy
+ - Create TSIGKeys (for AXFR In and Out)
+ - Create signing policy
+ - Add zones using DNS adapter and created policy
 3. Configure slave DNS server to request signed zone using TSIGKeys (AXFR Out)
 
