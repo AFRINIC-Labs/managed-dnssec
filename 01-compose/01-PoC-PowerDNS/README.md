@@ -33,6 +33,8 @@ Each zone has two **NS**:
 #### Storage ####
 One **shared_mysql** container from `mysql/mysql-server:5.7` image. MySQL Data and configurations (`bind`/`nsd`/`pdns_authoritative`/`pdns_slave`/`shared_mysql`) are saved to disk using docker volume from `etc` folder.
 
+#### Environment ####
+Environment variables related to MySQL and PowerDNS are defined in `.env` file.
 
 ### DNS API ###
 One **dns_api** to send request to **pdns_authoritative** `API`. Sign zone using `API` and get signed zone data using AXFR from `dnspython` package.
@@ -41,8 +43,10 @@ One **dns_api** to send request to **pdns_authoritative** `API`. Sign zone using
 How to deploy the lab
 * Clean some volume
 ```
-docker volume rm poc_pdns_slave
-docker volume rm poc_pdns_authoritative
+docker volume rm nsd_db
+docker volume rm shared_mysql_data
+docker volume rm pdns_slave
+docker volume rm pdns_authoritative
 ```
 * Build it
 ```

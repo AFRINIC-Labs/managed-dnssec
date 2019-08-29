@@ -29,12 +29,17 @@ Four authoritative DNS servers:
 #### Storage ####
 One **shared_mysql** container from `mysql/mysql-server:5.7` image. MySQL Data and configurations (`bind_authoritative`/`nsd_authoritative`/`pdns_authoritative`/`shared_mysql` / `opendnssec`) are saved to disk using docker volume from `etc` folder. **opendnssec** create required tables on **shared_mysql** database to be use by Enforcer Datastore.
 
+#### Environment ####
+Environment variables related to MySQL, PowerDNS and OpenDNSSEC are defined in `.env` file.
+
 
 ### How to ###
 How to deploy the lab
 * Clean some volume
 ```
-docker volume prune
+docker volume rm nsd_db
+docker volume rm shared_mysql_data
+docker volume rm pdns_authoritative
 ```
 * Build it
 ```
