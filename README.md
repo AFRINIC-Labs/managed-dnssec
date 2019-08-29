@@ -19,6 +19,8 @@ Two implementations have been tested:
 * `PowerDNS` as signer with MySQL backend. More details [here](02-k8s/02-pdns)
 * `OpenDNSSEC` as signer (using DNS adapter) with MySQL backend. Since `OpenDNSSEC` did not offer an API, we added a `Flask` API that use `k8s` `Role` and `RoleBinding` on `pods/exec` resources. This API can then, receive external request and run openDNSSEC related command. More details [here](02-k8s/03-opendnssec)
 
+We use private registry to store custom images. More details [here](02-k8s/01-images)
+
 ### Docker Swarm ###
 
 #### Mini documentation ####

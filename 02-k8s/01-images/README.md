@@ -1,7 +1,7 @@
 # Images used by k8s deployment
 Custom docker images are created and pushed on private registry
 
-## Minikue ##
+## Minikube ##
 Follow post [Sharing a local registry with minikube](https://blog.hasura.io/sharing-a-local-registry-for-minikube-37c7240d0615/)
 1. Create a registry on minikube
 ```
