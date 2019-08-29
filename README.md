@@ -3,7 +3,7 @@ A container-based hosted DNSSEC service
 
 ## Objectives ##
 
-## Delivrables##
+## Delivrables ##
 * DNSSEC signing  using native Docker Compose (PoC)
 * Orchestration and scheduling of DNSSEC signing using k8s (PoC)
 * **DNSSEC signing  using Docker Swarm** (Staging)
