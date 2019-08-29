@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dnssec-configmap-customer-01
+  namespace: customer-01
+data:
+  SIGNER_MYSQL_HOST: dnssec-service-mysql-signer-customer-01 # MySQL internal service name
+  SIGNER_MYSQL_USER: powerdns
+  SIGNER_MYSQL_DATABASE: powerdns
+  SIGNER_MYSQL_PORT: "3306"
+
+  SIGNER_API_KEY: TlNEX1RTSUdfU0VDUkVUX0tFWQo
+

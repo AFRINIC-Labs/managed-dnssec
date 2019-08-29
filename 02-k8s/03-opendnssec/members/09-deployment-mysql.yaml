@@ -1,0 +1,52 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: dnssec-deployment-mysql-customer-01
+  namespace: customer-01
+  labels:
+    app: dnssec-mysql-customer-01
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dnssec-mysql-customer-01
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: dnssec-mysql-customer-01
+    spec:
+      containers:
+      - name: enforcer-db
+        image: mysql/mysql-server:5.7
+        ports:
+          - containerPort: 3306
+            name: mysql
+        volumeMounts:
+          - mountPath: /var/lib/mysql
+            name: mysql-data
+        livenessProbe:
+            tcpSocket:
+              port: 3306
+        env:
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: dnssec-secret-customer-01
+                key: SIGNER_MYSQL_PASS
+          - name: MYSQL_USER
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_MYSQL_USER
+          - name: MYSQL_DATABASE
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_MYSQL_DATABASE  
+
+      volumes:
+      - name: mysql-data
+        persistentVolumeClaim:
+          claimName: dnssec-pv-claim-mysql-customer-01

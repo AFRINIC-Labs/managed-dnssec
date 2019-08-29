@@ -1,0 +1,135 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: dnssec-deployment-customer-01
+  namespace: customer-01
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dnssec-deployment-customer-01
+  template:
+    metadata:
+      labels:
+        app: dnssec-deployment-customer-01
+    spec:
+      serviceAccountName: dnssec-service-account-customer-01
+      containers:
+      - name: signer-api
+        image: localhost:5000/signer-api:1.0
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 5000
+        livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+        readinessProbe:
+            httpGet:
+              path: /k8s/exec/customer-01/status
+              port: 5000
+            initialDelaySeconds: 10
+            failureThreshold: 24
+            timeoutSeconds: 3
+
+      - name: signer
+        image: localhost:5000/signer:1.0
+        imagePullPolicy: Always
+        volumeMounts:
+          - mountPath: /etc/opendnssec
+            name: signer-configs
+        ports:
+          - containerPort: 53
+        env:
+          - name: MYSQL_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_MYSQL_HOST
+          - name: MYSQL_PASS
+            valueFrom:
+              secretKeyRef:
+                name: dnssec-secret-customer-01
+                key: SIGNER_MYSQL_PASS
+          - name: MYSQL_USER
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_MYSQL_USER
+          - name: MYSQL_DB
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_MYSQL_DATABASE
+          - name: MYSQL_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_MYSQL_PORT
+          - name: SHM_LABEL
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_SHM_LABEL
+          - name: SHM_PIN
+            valueFrom:
+              secretKeyRef:
+                name: dnssec-secret-customer-01
+                key: SIGNER_SHM_PIN
+          - name: SHM_SO_PIN
+            valueFrom:
+              secretKeyRef:
+                name: dnssec-secret-customer-01
+                key: SIGNER_SHM_SO_PIN
+          - name: SIGNER_ADAPTER_DNS_TSIG_IN_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_ADAPTER_DNS_TSIG_IN_NAME
+          - name: SIGNER_ADAPTER_DNS_TSIG_IN_ALGORITHM
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_ADAPTER_DNS_TSIG_IN_ALGORITHM
+          - name: SIGNER_ADAPTER_DNS_TSIG_IN_SECRET
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_ADAPTER_DNS_TSIG_IN_SECRET
+          - name: SIGNER_ADAPTER_DNS_TSIG_OUT_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_ADAPTER_DNS_TSIG_OUT_NAME
+          - name: SIGNER_ADAPTER_DNS_TSIG_OUT_ALGORITHM
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_ADAPTER_DNS_TSIG_OUT_ALGORITHM
+          - name: SIGNER_ADAPTER_DNS_TSIG_OUT_SECRET
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_ADAPTER_DNS_TSIG_OUT_SECRET
+          - name: SIGNER_ADAPTER_DNS_INBOUND_REMOTE_IP
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_ADAPTER_DNS_INBOUND_REMOTE_IP
+          - name: SIGNER_ADAPTER_DNS_INBOUND_REMOTE_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_ADAPTER_DNS_INBOUND_REMOTE_PORT
+          - name: SIGNER_ADAPTER_DNS_OUTBOUND_PEER_IP
+            valueFrom:
+              configMapKeyRef:
+                name: dnssec-configmap-customer-01
+                key: SIGNER_ADAPTER_DNS_OUTBOUND_PEER_IP
+      #imagePullSecrets:
+      #  - name: registrypullsecret
+
+      volumes:
+        - name: signer-configs
+          persistentVolumeClaim:
+            claimName: dnssec-pv-claim-signer-customer-01
