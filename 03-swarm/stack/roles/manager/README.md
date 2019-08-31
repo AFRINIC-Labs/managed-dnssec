@@ -44,15 +44,15 @@ Role Variables
 
   `limits`: Maximum resources utilisation.
 
-      `cpus`: Number of maximum CPU time assigned to the container. Current is *'0.3'*.
+   `cpus`: Number of maximum CPU time assigned to the container. Current is *'0.3'*.
 
-      `memory`: Maximum memory allocated to the container. Current is *256M*
+   `memory`: Maximum memory allocated to the container. Current is *256M*
 
   `reservations`: Guaranteed resources utilisation.
 
-    `cpus`: Guaranteed number CPU time assigned to the container. Current is  *'0.1'*.
+   `cpus`: Guaranteed number CPU time assigned to the container. Current is  *'0.1'*.
 
-    `memory`: Guaranteed memory allocated to the container. Current is *128M*.
+   `memory`: Guaranteed memory allocated to the container. Current is *128M*.
 
 
 `private_registry`: private registry IP/FQDN. Current is *registry.mdnssec.ri.mu.afrinic.net*.
