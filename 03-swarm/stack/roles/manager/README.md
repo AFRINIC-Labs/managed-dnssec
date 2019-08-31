@@ -73,15 +73,15 @@ Role Variables
 
   `limits`: Maximum resources utilisation.
 
-    `cpus`: Number of maximum CPU time assigned to the container. Current is *'0.5'*.
+  `cpus`: Number of maximum CPU time assigned to the container. Current is *'0.5'*.
 
-    `memory`: Maximum memory allocated to the container. Current is *128M*.
+   `memory`: Maximum memory allocated to the container. Current is *128M*.
 
   `reservations`: Guaranteed resources utilisation.
 
-    `cpus`: Guaranteed number CPU time assigned to the container. Current is *'0.25'*.
+   `cpus`: Guaranteed number CPU time assigned to the container. Current is *'0.25'*.
 
-    `memory`: Guaranteed memory allocated to the container. Current is *20M*.
+   `memory`: Guaranteed memory allocated to the container. Current is *20M*.
 
 
 `remote_dst_path`: Folder where project data will be copied. Current is *"/home/{{ ansible_ssh_user }}"*.
@@ -94,15 +94,15 @@ Role Variables
 
   `limits`: Maximum resources utilisation.
 
-    `cpus`: Number of maximum CPU time assigned to the container. Current is *'0.5'*
+   `cpus`: Number of maximum CPU time assigned to the container. Current is *'0.5'*
 
-    `memory`: Maximum memory allocated to the container. Current is *256M*.
+   `memory`: Maximum memory allocated to the container. Current is *256M*.
 
   `reservations`: Guaranteed resources utilisation.
 
-    `cpus`: Guaranteed number CPU time assigned to the container. Current is *'0.25'*
+   `cpus`: Guaranteed number CPU time assigned to the container. Current is *'0.25'*
 
-    `memory`: Guaranteed memory allocated to the container. Current is *128M*.
+   `memory`: Guaranteed memory allocated to the container. Current is *128M*.
 
 `mysql_server_slave`: MySQL (slave) image name. Current is *mysql-slave57*.
 
@@ -112,15 +112,15 @@ Role Variables
 
   `limits`: Maximum resources utilisation.
 
-    `cpus`: Number of maximum CPU time assigned to the container. Current is *'1.0'*.
+   `cpus`: Number of maximum CPU time assigned to the container. Current is *'1.0'*.
 
-    `memory`: Maximum memory allocated to the container. Current is *512M*
+   `memory`: Maximum memory allocated to the container. Current is *512M*
 
   `reservations`: Guaranteed resources utilisation.
 
-    `cpus`: Guaranteed number CPU time assigned to the container. Current is *'0.5'*
+   `cpus`: Guaranteed number CPU time assigned to the container. Current is *'0.5'*
 
-    `memory`: Guaranteed memory allocated to the container. Current is *256M*
+   `memory`: Guaranteed memory allocated to the container. Current is *256M*
 
 `pdns_api`: PowerDNS image name. Current is *pdns42*.
 
@@ -130,29 +130,29 @@ Role Variables
 
   `limits`: Maximum resources utilisation.
 
-    `cpus`: Number of maximum CPU time assigned to the container. Current is *'0.2'*.
+   `cpus`: Number of maximum CPU time assigned to the container. Current is *'0.2'*.
 
-    `memory`: Maximum memory allocated to the container. Current is *256M*.
+   `memory`: Maximum memory allocated to the container. Current is *256M*.
 
   `reservations`: Guaranteed resources utilisation.
 
-    `cpus`: Guaranteed number CPU time assigned to the container. Current is *'0.1'*.
+   `cpus`: Guaranteed number CPU time assigned to the container. Current is *'0.1'*.
 
-    `memory`: Guaranteed memory allocated to the container. Current is *128M*.
+   `memory`: Guaranteed memory allocated to the container. Current is *128M*.
 
 `mysql_server_common_resources`: MySQL container resource restrictions on **member stack**.
 
   `limits`: Maximum resources utilisation.
 
-    `cpus`: Number of maximum CPU time assigned to the container. Current is *'0.3'*.
+   `cpus`: Number of maximum CPU time assigned to the container. Current is *'0.3'*.
 
-    `memory`: Maximum memory allocated to the container. Current is *512M*.
+   `memory`: Maximum memory allocated to the container. Current is *512M*.
 
   `reservations`: Guaranteed resources utilisation.
 
-    `cpus`: Guaranteed number CPU time assigned to the container. Current is *'0.1'*.
+   `cpus`: Guaranteed number CPU time assigned to the container. Current is *'0.1'*.
 
-    `memory`: Guaranteed memory allocated to the container. Current is *256M*.
+   `memory`: Guaranteed memory allocated to the container. Current is *256M*.
 
 
 Dependencies
