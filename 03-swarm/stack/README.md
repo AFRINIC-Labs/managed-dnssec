@@ -8,7 +8,7 @@ This lab is a proof of concept for Managed DNSSEC AFRINIC Labs project.
 
 
 ### Deployment ###
-With an Ansible playbook [`stack.yml`](stack/stack.yml), we can deploy a docker swarm `manager` host. This playbook will:
+With an Ansible playbook [`stack.yml`](stack.yml), we can deploy a docker swarm `manager` host. This playbook will:
 * Install all dependencies for docker, docker-compose and docker swarm.
 * Start a swarm cluster on the node.
 * Deploy a local registry to be use in the swarm.
@@ -208,11 +208,11 @@ From step `12`, we can start using PowerDNS API
 1. Create slave TSIG keys
 2. Create slave zone
 3. Assign slave TSIG key to slave zone
-4. Check if zone data
-  1. zone existence
-  2. zone metadata
-  3. zone signed ?
-  4. zone data (verify AXFR is ok)
+4. Check zone data
+    1. zone existence
+    2. zone metadata
+    3. zone signed ?
+    4. zone data (verify AXFR is ok)
 5. Set zone to master
 6. Create master TSIG key
 7. Assign master TSIG key to master zone
