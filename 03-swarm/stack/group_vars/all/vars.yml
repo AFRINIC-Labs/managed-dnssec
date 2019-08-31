@@ -1,0 +1,74 @@
+docker_compose_version: 1.24.1
+docker_compose_os: Linux
+docker_compose_arch: x86_64
+
+
+replication_net: db_replication_net
+management_api: stack_api
+
+private_registry: registry.mdnssec.ri.mu.afrinic.net
+private_registry_port: 5000
+private_registry_service: registry
+private_registry_image: registry:2
+private_registry_port_published: 5000
+private_registry_port_target: 5000
+private_registry_volume: registry_data
+private_registry_resources:
+  limits:
+    cpus: '0.5'
+    memory: 128M
+  reservations:
+    cpus: '0.25'
+    memory: 20M
+
+remote_dst_path: "/home/{{ ansible_ssh_user }}"
+
+mysql_server_master: mysql-master57
+mysql_server_master_tag: 1.0
+mysql_server_master_resources:
+  limits:
+    cpus: '0.5'
+    memory: 256M
+  reservations:
+    cpus: '0.25'
+    memory: 128M
+
+signer_api: signer-api
+signer_api_tag: 1.0
+signer_api_port: 5005
+signer_api_resources:
+  limits:
+    cpus: '0.3'
+    memory: 256M
+  reservations:
+    cpus: '0.1'
+    memory: 128M
+
+
+mysql_server_slave: mysql-slave57
+mysql_server_slave_tag: 1.0
+mysql_server_slave_resources:
+  limits:
+    cpus: '1.0'
+    memory: 512M
+  reservations:
+    cpus: '0.5'
+    memory: 256M
+
+mysql_server_common_resources:
+  limits:
+    cpus: '0.3'
+    memory: 512M
+  reservations:
+    cpus: '0.1'
+    memory: 256M
+
+pdns_api: pdns42
+pdns_api_tag: 1.0
+pdns_common_resources:
+  limits:
+    cpus: '0.2'
+    memory: 256M
+  reservations:
+    cpus: '0.1'
+    memory: 128M

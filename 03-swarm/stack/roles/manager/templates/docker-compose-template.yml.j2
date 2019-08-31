@@ -1,0 +1,80 @@
+version: "3.7"
+services:
+  MYSQL_SERVICE_NAME:
+    image: {{ private_registry }}:{{ private_registry_port }}/{{ mysql_server_master }}:{{ mysql_server_master_tag }}
+    build:
+      dockerfile: Dockerfile
+      context: mysql
+    hostname: MYSQL_CONTAINER_NAME
+    container_name: MYSQL_CONTAINER_NAME
+    expose:
+      - 3306
+    volumes:
+      - PDNS_DB_VOLUME_NAME:/var/lib/mysql
+    networks:
+      - MDSNSSEC_NET_NAME
+      - {{ replication_net }}
+    env_file: .env
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: '{{ mysql_server_common_resources.limits.cpus }}'
+          memory: {{ mysql_server_common_resources.limits.memory }}
+        reservations:
+          cpus: '{{ mysql_server_common_resources.reservations.cpus }}'
+          memory: {{ mysql_server_common_resources.reservations.memory }}
+      replicas: 1
+      labels: [APP=NAMESPACE]
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+
+  PDNS_SERVICE_NAME:
+    image: {{ private_registry }}:{{ private_registry_port }}/{{ pdns_api }}:{{ pdns_api_tag }}
+    build:
+      dockerfile: Dockerfile
+      context: pdns
+    hostname: PDNS_CONTAINER_NAME
+    container_name: PDNS_CONTAINER_NAME
+    ports:
+      - "PDNS_DNS_PORT_REPLACE:53"
+      - "PDNS_DNS_PORT_REPLACE:53/udp"
+      - "PDNS_API_PORT_REPLACE:PDNS_API_PORT_REPLACE"
+    networks:
+      - MDSNSSEC_NET_NAME
+    env_file: .env
+    healthcheck:
+      test: ["CMD", "pdns_control" ,"ping"]
+      timeout: 15s
+      retries: 5
+    depends_on:
+      - MYSQL_SERVICE_NAME
+    deploy:
+      resources:
+        limits:
+          cpus: '{{ pdns_common_resources.limits.cpus }}'
+          memory: {{ pdns_common_resources.limits.memory }}
+        reservations:
+          cpus: '{{ pdns_common_resources.reservations.cpus }}'
+          memory: {{ pdns_common_resources.reservations.memory }}
+      replicas: 1
+      labels: [APP=NAMESPACE]
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+
+networks:
+  MDSNSSEC_NET_NAME:
+  {{ replication_net }}:
+    external: true
+
+volumes:
+  PDNS_DB_VOLUME_NAME:
