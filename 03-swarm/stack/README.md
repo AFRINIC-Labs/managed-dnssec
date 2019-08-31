@@ -8,7 +8,7 @@ This lab is a proof of concept for Managed DNSSEC AFRINIC Labs project.
 
 
 ### Deployment ###
-With an Ansible playbook [`stack.yml`](stack.yml), we can deploy a docker swarm `manager` host. This playbook will:
+With an Ansible playbook [`stack.yml`](stack.yml) that use a custom role [manager](roles/manager), we can deploy a docker swarm `manager` host. This playbook will:
 * Install all dependencies for docker, docker-compose and docker swarm.
 * Start a swarm cluster on the node.
 * Deploy a local registry to be use in the swarm.
