@@ -51,7 +51,7 @@ COMPOSE_FILE = os.environ.get('COMPOSE_FILE', "docker-compose.yml")
 API_BASE = os.environ.get('API_BASE', '/api/v1')
 TOKEN = os.environ.get('TOKEN', "F17s++tlP8Ttuo+1vOTjJqqUiFTeix+yAyc1G9ByFDI")
 ENV_FILE_SLAVE = os.environ.get('ENV_FILE_SLAVE',".env_slave")
-MYSQL_SLAVE_SERVER = os.environ.get('MYSQL_SLAVE_SERVER',"mysql_replication_db")
+REPLICATION_SERVER = os.environ.get('REPLICATION_SERVER',"mysql_replication_db")
 APP_ENV = os.environ.get('APP_ENV', 'Dev')
 
 app = Flask(__name__)
@@ -92,7 +92,7 @@ slave_info = db_slave()
 
 # Connect to slave db
 app.config['SQLALCHEMY_BINDS'] = {
-    'slave': 'mysql+mysqldb://root:'+ slave_info['MYSQL_ROOT_PASSWORD'] + '@'+ MYSQL_SLAVE_SERVER +'/'
+    'slave': 'mysql+mysqldb://root:'+ slave_info['MYSQL_ROOT_PASSWORD'] + '@'+ REPLICATION_SERVER +'/'
 }
 
 
