@@ -27,7 +27,7 @@ The `stack` folder is used by the `stack_api` to deploy AFRINIC member DNSSEC si
 
 ### Mini documentation ###
 1. Prepare vault authentication parameters
-We assume that `remote_user` can use `sudo` on remote server. Remote server IP/domain is added in group `managers` in `inventory` file.
+We assume that `remote_user` can use `sudo` on remote server. Remote server IP/domain is added in group `managers` in `inventory` file ie replace *<swarm_manager_ip_or_fqdn>* by the swarm server.
 ```
 ansible-vault create group_vars/managers/vault.yml
 vault_ssh_pass: <remote_user_password>
@@ -38,7 +38,7 @@ vault_ssh_user: <remote_user>
 ```
 echo "vault_super_password" > .vault_pass.txt
 ```
-3. Add vault password file in ansible.cfg.
+3. Add vault password file in ansible.cfg (it should be done already).
 ```
 vim ansible.cfg
 [defaults]
@@ -46,7 +46,7 @@ vim ansible.cfg
 vault_password_file = ./.vault_pass.txt
 ...
 ```
-4. Update environment variables in management
+4. Update environment variables in `management` folder
 Those variables are use by the `stack_api` while deploying two MySQL server (master and slave) and a Flask API.
 ```
 vim roles/manager/files/management/.env
@@ -57,6 +57,7 @@ MYSQL_PASSWORD=<random_string>
 MYSQL_ROOT_PASSWORD=<random_string>
 REPLICATION_USER=repl_api
 REPLICATION_PASS=<random_string>
+REPLICATION_SERVER=mysql_replication_db
 
 SERVER_ID=4294967285
 # max 4294967295
@@ -72,10 +73,32 @@ COMPOSE_FILE=docker-compose.yml
 # PLEASE, no / or space at the end the API_BASE
 API_BASE=/api/v1
 TOKEN=<random_string>
-MYSQL_SLAVE_SERVER=mysql_replication_db
 
 APP_ENV=Prod
 ```
+Variables starting by **MYSQL_** are related to MySQL master instance. Note that MySQL port `3306` is not open to external.
+
+
+Variables starting by **REPLICATION_** are related to MySQL slave instance (multi-source replication). Note that MySQL port `3306` is not open to external.
+
+**SERVER_ID** is used by the MySQL multi-source replication process to identify each MySQL instance.
+
+Variables starting by **PDNS_** are related to PowerDNS (DNSSEC signer). **PDNS_DNS_PORT** is the starting DNS port for all signer instances (one per AFRINIC member). **PDNS_API_PORT** is the starting API HTTP port for all signer instances (one per AFRINIC member). Those numbers can be changed, but note that the `stack_api` is listening on port `5005` and the local registry on port `5000`.
+
+**FOLDER_PATH** is used by the `stack_api` to store generated **docker-compose.yml** file.
+
+**ENV_BASE_FILE** is the environment template file that is used to generate custom and unique **.env**. This **.env** file will be read by corresponding **docker-compose.yml** file.
+
+**ENV_FILE_SLAVE** store variable for MySQL slave instance (multi-source replication). See parameters bellow.
+
+**COMPOSE_BASE_FILE** is the template that is used to generate custom and unique **docker-compose.yml** file per AFRINIC member while deploying their DNSSEC signing stack. The **docker-compose.yml** file name is predefined with **COMPOSE_FILE** variable.
+
+The API base url is dedinied in **API_BASE**. This base url can be changed which different version of the `stack_api`.
+
+**TOKEN** is the HTTP authentication header to protect access to the `stack_api`.
+
+**APP_ENV** is related to Flash deployment mode.
+
 5. Update environment variables in management for MySQL replication
 ```
 vim roles/manager/files/management/.env_slave
@@ -84,49 +107,61 @@ MYSQL_ROOT_PASSWORD=<random_string>
 MYSQL_ROOT_HOST=%
 FOLDER_PATH=/data/stack/
 ```
+We allow authenticated root user to access the slave database without any restriction. Note that MySQL port `3306` is not open to external. We give highest **SERVER_ID** to the MySQL slave instance.
+
+---
+**NOTE**
+
+We use a seperate environment file for MySQL slave instance to avoid variable name conflicts. MySQL image is waiting for variables like **SERVER_ID**, **MYSQL_ROOT_PASSWORD**, **MYSQL_ROOT_HOST**, etc and it is not possible to assign two different value to the same variable (used by master and slave instances).
+
+---
+
 6. Run the playbook
 ```
 ansible-playbook stack.yml
 ```
 7. Test if docker client it running
 ```
-curl -X POST -H 'X-Auth-Token: 9lH7ebTv1HLmog'  http://mdnssec.ri.mu.afrinic.net:5005/api/v1/docker | jq .
+curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/docker | jq .
 
 {
   "error": null,
   "output": "Docker version 19.03.1, build 74b1e89e8a\n",
   "status": "OK"
 }
+
 ```
 8. Test `stack_api`
 ```
-curl -X POST -H 'X-Auth-Token: 9lH7ebTv1HLmog'  http://mdnssec.ri.mu.afrinic.net:5005/api/v1/stack | jq .
+curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack | jq .
 
 {
   "error": null,
   "output": [
-    "\"stack_api:3\""
+    "stack_api:3"
   ],
   "status": "OK"
 }
+
 ```
 9. You can then, create a deployment for AFRINIC member
 ```
-curl -X POST -H 'X-Auth-Token: 9lH7ebTv1HLmog'  http://mdnssec.ri.mu.afrinic.net:5005/api/v1/stack/deploy/ORG-AFNC1-AFRINIC | jq .
+curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/deploy/ORG-AFNC1-AFRINIC | jq .
 
 {
   "error": null,
   "output": {
-    "api_key": "FUlI35WdeR2WrSB",
-    "api_port": 30002,
-    "dns_port": 8002,
-    "stack": "ORG-AFNC1-AFRINIC_S2",
-    "url": "curl -v -H 'X-API-Key: FUlI35WdeR2WrSB' http://HOST:30002/api/v1/servers/localhost"
+    "api_key": "Unjrbbji6howwDU",
+    "api_port": 30001,
+    "dns_port": 8001,
+    "stack": "ORG-AFNC1-AFRINIC_S1",
+    "url": "curl -v -H 'X-API-Key: Unjrbbji6howwDU' http://HOST:30001/api/v1/servers/localhost"
   },
   "status": "OK"
 }
 
-curl -X POST -H 'X-Auth-Token: 9lH7ebTv1HLmog'  http://mdnssec.ri.mu.afrinic.net:5005/api/v1/stack/deploy/ORG-AFNC1-AFRINIC | jq .
+
+curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/deploy/ORG-AFNC1-AFRINIC | jq .
 
 {
   "error": "Existing",
@@ -137,13 +172,13 @@ curl -X POST -H 'X-Auth-Token: 9lH7ebTv1HLmog'  http://mdnssec.ri.mu.afrinic.net
 ```
 10. List of stack deployed in the swarm
 ```
-curl -X POST -H 'X-Auth-Token: 9lH7ebTv1HLmog'  http://mdnssec.ri.mu.afrinic.net:5005/api/v1/stack | jq .
+curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack | jq .
 
 {
   "error": null,
   "output": [
-    "\"ORG-AFNC1-AFRINIC_S1:2\"",
-    "\"stack_api:3\""
+    "ORG-AFNC1-AFRINIC_S1:2",
+    "stack_api:3"
   ],
   "status": "OK"
 }
@@ -153,16 +188,16 @@ We have the default `stack_api` with `3` services (MySQL master, MySQL slave and
 
 11. Get information on a AFRINIC member stack using the stack name
 ```
-curl -X POST -H 'X-Auth-Token: 9lH7ebTv1HLmog'  http://mdnssec.ri.mu.afrinic.net:5005/api/v1/stack/info/ORG-AFNC1-AFRINIC_S2 | jq .
+curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/info/ORG-AFNC1-AFRINIC_S1 | jq .
 
 {
   "error": null,
   "output": {
-    "api_key": "FUlI35WdeR2WrSB",
+    "api_key": "Unjrbbji6howwDU",
     "api_port": 30001,
     "dns_port": 8001,
     "stack": "ORG-AFNC1-AFRINIC_S1",
-    "url": "curl -v -H 'X-API-Key: FUlI35WdeR2WrSB' http://HOST:30001/api/v1/servers/localhost"
+    "url": "curl -v -H 'X-API-Key: Unjrbbji6howwDU' http://HOST:30001/api/v1/servers/localhost"
   },
   "status": "OK"
 }
@@ -170,7 +205,7 @@ curl -X POST -H 'X-Auth-Token: 9lH7ebTv1HLmog'  http://mdnssec.ri.mu.afrinic.net
 ```
 12. Check if PowerDNS API is running
 ```
-curl -H 'X-API-Key: FUlI35WdeR2WrSB' http://mdnssec.ri.mu.afrinic.net:30002/api/v1/servers/localhost | jq .
+curl -H 'X-API-Key: Unjrbbji6howwDU' http://<swarm_manager_ip_or_fqdn>:30001/api/v1/servers/localhost | jq .
 
 {
   "config_url": "/api/v1/servers/localhost/config{/config_setting}",
@@ -185,7 +220,7 @@ curl -H 'X-API-Key: FUlI35WdeR2WrSB' http://mdnssec.ri.mu.afrinic.net:30002/api/
 ```
 13. Remove a stack from the swarm
 ```
-curl -X POST -H 'X-Auth-Token: 9lH7ebTv1HLmog'  http://mdnssec.ri.mu.afrinic.net:5005/api/v1/stack/remove/ORG-AFNC1-AFRINIC_S1 | jq .
+curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/remove/ORG-AFNC1-AFRINIC_S1 | jq .
 
 {
   "error": null,
@@ -193,7 +228,7 @@ curl -X POST -H 'X-Auth-Token: 9lH7ebTv1HLmog'  http://mdnssec.ri.mu.afrinic.net
   "status": "OK"
 }
 
-curl -X POST -H 'X-Auth-Token: 9lH7ebTv1HLmog'  http://mdnssec.ri.mu.afrinic.net:5005/api/v1/stack/remove/ORG-AFNC1-AFRINIC_S1 | jq .
+curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/remove/ORG-AFNC1-AFRINIC_S1 | jq .
 
 {
   "error": "NoStack",
