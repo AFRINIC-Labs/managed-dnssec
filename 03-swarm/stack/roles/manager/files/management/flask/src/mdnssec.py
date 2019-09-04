@@ -52,7 +52,11 @@ API_BASE = os.environ.get('API_BASE', '/api/v1')
 TOKEN = os.environ.get('TOKEN', "F17s++tlP8Ttuo+1vOTjJqqUiFTeix+yAyc1G9ByFDI")
 ENV_FILE_SLAVE = os.environ.get('ENV_FILE_SLAVE',".env_slave")
 REPLICATION_SERVER = os.environ.get('REPLICATION_SERVER',"mysql_replication_db")
+REPLICATION_USER = os.environ.get('REPLICATION_USER',"repl_api")
+REPLICATION_PASS = os.environ.get('REPLICATION_PASS',"qocUcsPQiKuhTJQnIR89b25rCm0")
+SERVER_ID = os.environ.get('SERVER_ID', 4294967285)
 APP_ENV = os.environ.get('APP_ENV', 'Dev')
+REPLICATION_CHANNEL = os.environ.get('REPLICATION_CHANNEL', 'stack_api')
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqldb://'+ os.environ.get('MYSQL_USER', 'root') + ':'+ os.environ.get('MYSQL_PASSWORD', 'toor') + '@' + os.environ.get('MYSQL_HOST', 'localhost') +'/' + os.environ.get('MYSQL_DATABASE', 'mdnssec')
@@ -95,6 +99,7 @@ app.config['SQLALCHEMY_BINDS'] = {
     'slave': 'mysql+mysqldb://root:'+ slave_info['MYSQL_ROOT_PASSWORD'] + '@'+ REPLICATION_SERVER +'/'
 }
 
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 #https://gist.github.com/betrcode/0248f0fda894013382d7
 def isOpen(ip, port, timeout):
@@ -453,6 +458,7 @@ def create_customer(orgId):
         'dns_port': dns_port
         }
 
+        replication_user = "rep_" + namespace
         repl_data = {}
 
         customer = Customer(
@@ -462,7 +468,7 @@ def create_customer(orgId):
             mysql_password = mysql_password,
             mysql_container =  "mysql_s" + str(customer_id),
             mysql_server_id =  customer_id,
-            mysql_repliation_user = "repl_s" + str(customer_id),
+            mysql_repliation_user = replication_user,
             mysql_replication_password =  mysql_replication_password,
             pdns_container = "pdns_s" + str(customer_id),
             pdns_volume = "pdns_mysql_s" + str(customer_id),
@@ -482,9 +488,9 @@ def create_customer(orgId):
         env_read = er.read()
         er.close()
 
-        replication_user = "rep_" + namespace
         repl_data['user'] = replication_user
         repl_data['password'] = mysql_replication_password
+        repl_data['id'] = customer_id
 
         mysql_service_name = "pdns_db_s" + str(customer_id)
 
@@ -563,10 +569,10 @@ def create_customer(orgId):
         raise err
 
 
-def configure_slave(channel, repl):
+def configure_slave(channel, repl, port=3306):
     try:
         # run query
-        query_change = text('CHANGE MASTER TO MASTER_HOST="' + repl["host"] +'", MASTER_USER="' + repl["user"] + '", MASTER_PASSWORD="' + repl["password"] + '", MASTER_PORT=3306, MASTER_AUTO_POSITION = 1 FOR CHANNEL "' + channel + '"')
+        query_change = text('CHANGE MASTER TO MASTER_HOST="' + repl["host"] +'", MASTER_USER="' + repl["user"] + '", MASTER_PASSWORD="' + repl["password"] + '", MASTER_PORT='+ str(port) +', MASTER_AUTO_POSITION = 1 FOR CHANNEL "' + channel + '"')
         print("[configure_slave] Changing master on slave")
         print(query_change)
         print(repl)
@@ -576,6 +582,19 @@ def configure_slave(channel, repl):
     except Exception as err:
         raise err
 
+# Force management database creation on slave, then start replication
+try:
+    # Add Management database for slave replication
+    management_db = {
+        'user': REPLICATION_USER,
+        'password': REPLICATION_PASS,
+        'host': os.environ.get('MYSQL_HOST')
+    }
+    query_create = text('CREATE DATABASE IF NOT EXISTS ' + os.environ.get('MYSQL_DATABASE', 'mdnssec'))
+    result = db.get_engine(bind='slave').execute(query_create)
+    configure_slave(REPLICATION_CHANNEL, management_db, 3306)
+except Exception as err:
+    raise err
 
 # Url prefix
 # https://stackoverflow.com/questions/18967441/add-a-prefix-to-all-flask-routes

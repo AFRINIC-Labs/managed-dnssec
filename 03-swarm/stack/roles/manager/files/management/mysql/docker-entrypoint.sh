@@ -108,7 +108,7 @@ if [ "$1" = 'mysqld' ]; then
 		fi
 
 		mysql_tzinfo_to_sql /usr/share/zoneinfo | "${mysql[@]}" mysql
-		
+
 		if [ ! -z "$MYSQL_RANDOM_ROOT_PASSWORD" ]; then
 			MYSQL_ROOT_PASSWORD="$(pwmake 128)"
 			echo "[Entrypoint-MySQL] GENERATED ROOT PASSWORD: $MYSQL_ROOT_PASSWORD"
@@ -170,7 +170,7 @@ EOF
 
         fi
 
-    
+
 		# When using a local socket, mysqladmin shutdown will only complete when the server is actually down
 		mysqladmin --defaults-extra-file="$PASSFILE" shutdown -uroot --socket="$SOCKET"
 		#rm -f "$PASSFILE"

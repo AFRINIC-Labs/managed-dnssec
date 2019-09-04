@@ -30,6 +30,7 @@ The `stack` folder is used by the `stack_api` to deploy AFRINIC member DNSSEC si
 We assume that `remote_user` can use `sudo` on remote server. Remote server IP/domain is added in group `managers` in `inventory` file ie replace *<swarm_manager_ip_or_fqdn>* by the swarm server.
 ```
 ansible-vault create group_vars/managers/vault.yml
+
 vault_ssh_pass: <remote_user_password>
 vault_ssh_user: <remote_user>
 
@@ -41,6 +42,7 @@ echo "vault_super_password" > .vault_pass.txt
 3. Add vault password file in ansible.cfg (it should be done already).
 ```
 vim ansible.cfg
+
 [defaults]
 ...
 vault_password_file = ./.vault_pass.txt
@@ -50,6 +52,7 @@ vault_password_file = ./.vault_pass.txt
 Those variables are use by the `stack_api` while deploying two MySQL server (master and slave) and a Flask API.
 ```
 vim roles/manager/files/management/.env
+
 MYSQL_HOST=mysql_db
 MYSQL_DATABASE=mdnssec
 MYSQL_USER=mdnssec
@@ -58,6 +61,7 @@ MYSQL_ROOT_PASSWORD=<random_string>
 REPLICATION_USER=repl_api
 REPLICATION_PASS=<random_string>
 REPLICATION_SERVER=mysql_replication_db
+REPLICATION_CHANNEL=stack_api
 
 SERVER_ID=4294967285
 # max 4294967295
@@ -97,11 +101,12 @@ The API base url is dedinied in **API_BASE**. This base url can be changed which
 
 **TOKEN** is the HTTP authentication header to protect access to the `stack_api`.
 
-**APP_ENV** is related to Flash deployment mode.
+**APP_ENV** is related to Flask deployment mode.
 
 5. Update environment variables in management for MySQL replication
 ```
 vim roles/manager/files/management/.env_slave
+
 SERVER_ID=4294967290
 MYSQL_ROOT_PASSWORD=<random_string>
 MYSQL_ROOT_HOST=%
