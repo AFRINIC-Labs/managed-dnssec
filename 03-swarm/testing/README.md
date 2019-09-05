@@ -182,10 +182,11 @@ ns2.nsd.tld.		43200	IN	A	172.16.10.10
 ;; MSG SIZE  rcvd: 238
 ```
 
-
 ---
 **TODO**
+
 Restrict any query to dedicated servers/IP.
+
 ---
 
 10. Check zones and tsig keys info
@@ -455,7 +456,51 @@ curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_a
 
 ```
 
-13. Check one zone cryptokeys
+13. Get metadata
+```
+curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/metadata| jq .
+
+[
+  {
+    "kind": "API-RECTIFY",
+    "metadata": [
+      "1"
+    ],
+    "type": "Metadata"
+  },
+  {
+    "kind": "AXFR-MASTER-TSIG",
+    "metadata": [
+      "nsd_slave."
+    ],
+    "type": "Metadata"
+  },
+  {
+    "kind": "NSEC3PARAM",
+    "metadata": [
+      "1 0 5 ab"
+    ],
+    "type": "Metadata"
+  },
+  {
+    "kind": "SOA-EDIT-API",
+    "metadata": [
+      "DEFAULT"
+    ],
+    "type": "Metadata"
+  },
+  {
+    "kind": "TSIG-ALLOW-AXFR",
+    "metadata": [
+      "nsd_master."
+    ],
+    "type": "Metadata"
+  }
+]
+
+```
+
+14. Check one zone cryptokeys
 ```
 curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/cryptokeys| jq .
 
@@ -499,7 +544,8 @@ curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_a
 PowerDNS is showing keys as **csk** even if they are **ksk** and **zsk** respectively.
 
 ---
-14. Check if signed zone is available on customer DNS server using TSIG
+
+15. Check if signed zone is available on customer DNS server using TSIG
 ```
 dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port> nsd.tld dnskey +multiline
 
