@@ -25,5 +25,5 @@ Two implementations have been tested:
 We use private registry to store custom images. More details [here](02-k8s/01-images)
 
 ### Docker Swarm ###
-This is the selected choice. We use PowerDNS 4.2.x (require to manipulate TSIGKeys). More details [here](03-swarm/stack). For testing, we have deployed authoritative DNS servers (NSD, Bind) as master to the signer (PowerDNS) and Knot as slave for the signer (PowerDNS). More details [here](03-swarm/02-testing).
+This is the selected choice. We use PowerDNS 4.2.x (require to manipulate TSIGKeys). More details [here](03-swarm/stack). For testing, we have deployed authoritative DNS servers (NSD, Bind) as master to the signer (PowerDNS) and Knot as slave for the signer (PowerDNS). More details [here](03-swarm/testing).
 

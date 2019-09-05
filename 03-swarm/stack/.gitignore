@@ -1,2 +1,3 @@
 .vault_pass.txt
 group_vars/managers/vault.yml
+ansible.log

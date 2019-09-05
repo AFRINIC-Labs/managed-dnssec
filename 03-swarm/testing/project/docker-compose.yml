@@ -1,0 +1,59 @@
+version: '2.2'
+services:
+  nsd_authoritative:
+    build:
+      dockerfile: Dockerfile
+      context: nsd
+    container_name: nsd_in
+    hostname: nsd_authoritative
+    ports:
+      - "53:53"
+      - "53:53/udp"
+    volumes:
+      - ./etc/nsd/conf:/etc/nsd
+      - ./etc/nsd/zones:/zones
+      - nsd_db:/var/db/nsd
+    healthcheck:
+      test: ["CMD", "nsd-control", "status"]
+      timeout: 10s
+      retries: 5
+
+  knot_authoritative:
+    image: cznic/knot:2.7
+    container_name: knot_out
+    hostname: knot_authoritative
+    volumes:
+      - ./etc/knot/storage:/storage
+      - ./etc/knot/config:/config
+      - ./etc/knot/rundir:/rundir
+    command: /bin/bash -c "knotd -c /config/knot.conf"
+    ports:
+      - "530:53"
+      - "530:53/udp"
+    healthcheck:
+      test: ["CMD", "knotc", "status"]
+      timeout: 10s
+      retries: 5
+    depends_on:
+      nsd_authoritative:
+        condition: service_healthy
+
+  dns_api:
+    build:
+      dockerfile: Dockerfile
+      context: dnspython
+    container_name: dns_api
+    hostname: dns_api
+    environment:
+      - PDNS_API_KEY=${PDNS_API_KEY}
+      - PDNS_KEY_ADDRESS=${PDNS_API_ADDRESS}
+      - PDNS_API_PORT=${PDNS_API_PORT}
+    volumes:
+      - ./dnspython/app:/usr/src/app
+    depends_on:
+      knot_authoritative:
+        condition: service_healthy
+
+volumes:
+  nsd_db:
+
