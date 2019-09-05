@@ -193,7 +193,7 @@ def create_cryptokeys(zone):
         post_data = {
             "keytype": "zsk",
             "active": True,
-            "algorithm": "rsasha256",
+            "algorithm": "rsasha512",
             "bits": 1024
         }
         data = fetch_json(urljoin(API_URL,API_VERSION) +'/zones/{0}/cryptokeys'.format(zone), headers=headers, method='POST', data=post_data)
