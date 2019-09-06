@@ -31,16 +31,16 @@ AFRINIC could provide for API access:
 Member should provide:
 1. zone name.
 2. TSIG key(s) for zone transfer to AFRINIC DNS (name, algo, key).
-3. Primary DNS IP for zone transfer to AFRINIC (`<member_primary_dns_ip>`/ `<member_primary_dns_port>`).
+3. Primary DNS IP for zone transfer to AFRINIC (`<member_primary_dns_ip>`/ `<member_primary_dns_port>`). In this lab, we use NSD as primary DNS.
 4. TSIG key(s) for zone transfer from AFRINIC DNS (name, algo, key) to their DNS server.
 5. Cryptokeys information (not yet implemented). In this test a KSK and a ZSK are created with followinf parameters:
     1. ksk
         1. "algorithm": "rsasha512"
         2. "bits": 2048
     2. zsk
-        1. "algorithm": "rsasha256"
+        1. "algorithm": "rsasha512"
         2. "bits": 1024
-5. Secondary DNS IP for zone transfer from AFRINIC (`<member_secondary_dns_ip>`/ `<member_secondary_dns_port>`).
+5. Secondary DNS IP for zone transfer from AFRINIC (`<member_secondary_dns_ip>`/ `<member_secondary_dns_port>`). In this lab, we use Knot.
 
 
 Keyroll are managed in PowerDNS for [ksk roll](https://doc.powerdns.com/authoritative/guides/kskroll.html) and [zsk](https://doc.powerdns.com/authoritative/guides/zskroll.html). NSEC3 parameters are set to **'1 0 1 ab'** according to [NSEC modes and parameters](https://doc.powerdns.com/authoritative/dnssec/operational.html#setting-the-nsec-modes-and-parameters).
@@ -502,7 +502,7 @@ curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_a
 
 14. Check one zone cryptokeys
 ```
-curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/cryptokeys| jq .
+curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/cryptokeys | jq .
 
 [
   {
@@ -591,7 +591,7 @@ dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port> nsd.tld +dnssec 
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 50837
-;; flags: qr aa rd; QUERY: 1, ANSWER: 23, AUTHORITY: 0, ADDITIONAL: 10
+;; flags: qr aa rd; QUERY: 1, ANSWER: 16, AUTHORITY: 0, ADDITIONAL: 4
 ;; WARNING: recursion requested but not available
 
 ;; OPT PSEUDOSECTION:
