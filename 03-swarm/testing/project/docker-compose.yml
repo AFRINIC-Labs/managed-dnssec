@@ -44,10 +44,6 @@ services:
       context: dnspython
     container_name: dns_api
     hostname: dns_api
-    environment:
-      - PDNS_API_KEY=${PDNS_API_KEY}
-      - PDNS_KEY_ADDRESS=${PDNS_API_ADDRESS}
-      - PDNS_API_PORT=${PDNS_API_PORT}
     volumes:
       - ./dnspython/app:/usr/src/app
     depends_on:
