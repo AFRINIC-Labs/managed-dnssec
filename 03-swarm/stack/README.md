@@ -244,7 +244,7 @@ curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/ap
 ```
 
 ### Next Steps ###
-From step `12`, we can start using PowerDNS API
+From step `12`, we can start using PowerDNS API. See [testing](../testing) for an implementation example.
 1. Create slave TSIG keys
 2. Create slave zone
 3. Assign slave TSIG key to slave zone
