@@ -179,32 +179,23 @@ def set_master(zone, tsigkey):
     except Exception as e:
         return {'status': 'error', 'msg': str(e) }
 
-def create_cryptokeys(zone):
+def create_cryptokeys(zone, keytype, algorithm, active, bit):
     try:
         post_data = {
-            "keytype": "ksk",
-            "active": True,
-            "algorithm": "rsasha512",
-            "bits": 2048
+            "keytype": keytype,
+            "active": active,
+            "algorithm": algorithm,
+            "bits": bit
         }
         data = fetch_json(urljoin(API_URL,API_VERSION) +'/zones/{0}/cryptokeys'.format(zone), headers=headers, method='POST', data=post_data)
         if 'error' in data:
-            return {'status': 'error', 'msg': 'Cannot add ksk to zone: ' + zone, 'detail': data}
-        post_data = {
-            "keytype": "zsk",
-            "active": True,
-            "algorithm": "rsasha512",
-            "bits": 1024
-        }
-        data = fetch_json(urljoin(API_URL,API_VERSION) +'/zones/{0}/cryptokeys'.format(zone), headers=headers, method='POST', data=post_data)
-        if 'error' in data:
-            return {'status': 'error', 'msg': 'Cannot add zsk to zone: ' + zone, 'detail': data}
+            return {'status': 'error', 'msg': 'Cannot add ' + keytype + ' to zone: ' + zone, 'detail': data}
     except Exception as e:
         return {'status': 'error', 'msg': str(e) }
 
 def set_nsec3(zone):
     try:
-        # Activate DNSSEC
+        # Update DNSSEC NSEC3PARAM
         post_data = {
             "nsec3param": "1 0 5 ab",
             "nsec3narrow": False,
@@ -273,8 +264,10 @@ print(tsigkey)
 if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
     nsd_master = set_master("nsd.tld", tsigkey["data"]["id"])
     print(nsd_master)
-    nsd_signed = create_cryptokeys("nsd.tld")
-    print(nsd_signed)
+    nsd_signed_ksk = create_cryptokeys("nsd.tld", "ksk", "rsasha512", True, 2048)
+    print(nsd_signed_ksk)
+    nsd_signed_zsk = create_cryptokeys("nsd.tld", "zsk", "rsasha512", True, 1024)
+    print(nsd_signed_zsk)
     nsec3 = set_nsec3("nsd.tld")
     print(nsec3)
 
@@ -284,8 +277,10 @@ print(tsigkey)
 if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
     bind_master = set_master("bind.tld", tsigkey["data"]["id"])
     print(bind_master)
-    bind_signed = create_cryptokeys("bind.tld")
-    print(bind_signed)
+    bind_signed_ksk = create_cryptokeys("bind.tld", "ksk", "rsasha512", True, 2048)
+    print(bind_signed_ksk)
+    bind_signed_zsk = create_cryptokeys("bind.tld", "zsk", "rsasha512", True, 1024)
+    print(bind_signed_zsk)
     nsec3 = set_nsec3("bind.tld")
     print(nsec3)
 
@@ -294,7 +289,9 @@ print(tsigkey)
 if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
     pdns_master = set_master("pdns.tld", tsigkey["data"]["id"])
     print(pdns_master)
-    pdns_signed = create_cryptokeys("pdns.tld")
-    print(pdns_signed)
+    pdns_signed_ksk = create_cryptokeys("pdns.tld", "ksk", "rsasha512", True, 2048)
+    print(pdns_signed_ksk)
+    pdns_signed_zsk = create_cryptokeys("pdns.tld", "zsk", "rsasha512", True, 1024)
+    print(pdns_signed_zsk)
     nsec3 = set_nsec3("pdns.tld")
     print(nsec3)
