@@ -18,6 +18,8 @@ services:
       timeout: 10s
       retries: 5
 
+
+
   knot_authoritative:
     image: cznic/knot:2.7
     container_name: knot_out
@@ -46,10 +48,27 @@ services:
     hostname: dns_api
     volumes:
       - ./dnspython/app:/usr/src/app
+      - ./dnsviz/data:/usr/src/app/data
     depends_on:
+#      dnsviz:
       knot_authoritative:
         condition: service_healthy
 
+  # dnsviz:
+  #   image: dnsviz/dnsviz
+  #   container_name: dnsviz
+  #   hostname: dns_viz
+  #   volumes:
+  #     - ./dnsviz/data:/data:rw
+  #   depends_on:
+  #     knot_authoritative:
+  #       condition: service_healthy
+  #   command: [ "/usr/bin/python3", "-u","/data/app.py" ]
+  #   entrypoint: [""]
+  #   healthcheck:
+  #     test: ["CMD", "dnsviz", "help"]
+  #     timeout: 10s
+  #     retries: 5
+
 volumes:
   nsd_db:
-
