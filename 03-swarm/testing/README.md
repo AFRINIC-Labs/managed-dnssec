@@ -122,16 +122,41 @@ docker exec -it f2ac46c35b8a /bin/sh
 {'status': 'ok', 'data': {'algorithm': 'hmac-sha256', 'id': 'nsd=5Fmaster.', 'key': '<nsd_master_secret_key>', 'name': 'nsd_master', 'type': 'TSIGKey'}}
 {'status': 'ok', 'data': {}}
 None
+None
 {'status': 'ok', 'data': {}}
+['59718 10 1 64c73e619c826c5f6e1a514ab6f801e7194a33d8', '59718 10 2 69685a0041d557ad4d9b32810faf03db940305708f8d9c304ca0d183dc66cf07', '59718 10 4 d2b074a1b0e42161e7d6f80b065d99586398c6b411a2c4dd0391356c6add64d37dfe7091b1d02e89fc63e6ae177e8fd0']
+59718 10 1 64c73e619c826c5f6e1a514ab6f801e7194a33d8
+59718 10 2 69685a0041d557ad4d9b32810faf03db940305708f8d9c304ca0d183dc66cf07
+59718 10 4 d2b074a1b0e42161e7d6f80b065d99586398c6b411a2c4dd0391356c6add64d37dfe7091b1d02e89fc63e6ae177e8fd0
+{'status': 'ok', 'data': ['59718 10 1 64c73e619c826c5f6e1a514ab6f801e7194a33d8', '59718 10 2 69685a0041d557ad4d9b32810faf03db940305708f8d9c304ca0d183dc66cf07', '59718 10 4 d2b074a1b0e42161e7d6f80b065d99586398c6b411a2c4dd0391356c6add64d37dfe7091b1d02e89fc63e6ae177e8fd0']}
 {'status': 'ok', 'data': {'algorithm': 'hmac-sha256', 'id': 'bind=5Fmaster.', 'key': '<bind_master_secret_key>', 'name': 'bind_master', 'type': 'TSIGKey'}}
 {'status': 'ok', 'data': {}}
 None
+None
 {'status': 'ok', 'data': {}}
+['23277 10 1 e438e69a97eaed51a9d5a2e9ec19935448f49dd8', '23277 10 2 4a0313d41e41d3f1ea04c49ef219c1e97bf659d15abd8952d362e0467671de14', '23277 10 4 e83783e3d8fe1e84212c57af3e195722b53c5b7259c67cdd65a45846678850c66b7540d5d457aa166b90dd3ae5bc4e5e']
+23277 10 1 e438e69a97eaed51a9d5a2e9ec19935448f49dd8
+23277 10 2 4a0313d41e41d3f1ea04c49ef219c1e97bf659d15abd8952d362e0467671de14
+23277 10 4 e83783e3d8fe1e84212c57af3e195722b53c5b7259c67cdd65a45846678850c66b7540d5d457aa166b90dd3ae5bc4e5e
+{'status': 'ok', 'data': ['23277 10 1 e438e69a97eaed51a9d5a2e9ec19935448f49dd8', '23277 10 2 4a0313d41e41d3f1ea04c49ef219c1e97bf659d15abd8952d362e0467671de14', '23277 10 4 e83783e3d8fe1e84212c57af3e195722b53c5b7259c67cdd65a45846678850c66b7540d5d457aa166b90dd3ae5bc4e5e']}
 {'status': 'ok', 'data': {'algorithm': 'hmac-sha256', 'id': 'pdns=5Fmaster.', 'key': '<pdns_master_secret_key>', 'name': 'pdns_master', 'type': 'TSIGKey'}}
 {'status': 'ok', 'data': {}}
 None
+None
 {'status': 'ok', 'data': {}}
-/usr/src/app # exit
+['50763 10 1 bc5ca1d0a397a59b522219f73e78a9f1c81fea2c', '50763 10 2 f0e94d3ec5746b7678c438510864577a0574060909aea49951cb48cafe6f4f13', '50763 10 4 73821360d703de6a8e41ec7f2d5d6b4ada633e6fe944c3eb98517c3f713646e65fe0cb771d049b353417e264a17ef20f']
+50763 10 1 bc5ca1d0a397a59b522219f73e78a9f1c81fea2c
+50763 10 2 f0e94d3ec5746b7678c438510864577a0574060909aea49951cb48cafe6f4f13
+50763 10 4 73821360d703de6a8e41ec7f2d5d6b4ada633e6fe944c3eb98517c3f713646e65fe0cb771d049b353417e264a17ef20f
+{'status': 'ok', 'data': ['50763 10 1 bc5ca1d0a397a59b522219f73e78a9f1c81fea2c', '50763 10 2 f0e94d3ec5746b7678c438510864577a0574060909aea49951cb48cafe6f4f13', '50763 10 4 73821360d703de6a8e41ec7f2d5d6b4ada633e6fe944c3eb98517c3f713646e65fe0cb771d049b353417e264a17ef20f']}
+
+/usr/src/app # cat data/
+app.py          dsset-bind.tld  dsset-nsd.tld   dsset-pdns.tld
+/usr/src/app # cat data/dsset-bind.tld
+bind.tld. IN DS 23277 10 1 e438e69a97eaed51a9d5a2e9ec19935448f49dd8
+bind.tld. IN DS 23277 10 2 4a0313d41e41d3f1ea04c49ef219c1e97bf659d15abd8952d362e0467671de14
+bind.tld. IN DS 23277 10 4 e83783e3d8fe1e84212c57af3e195722b53c5b7259c67cdd65a45846678850c66b7540d5d457aa166b90dd3ae5bc4e5e
+
 
 ```
 8. Test if zone transfer is working (from customer primary to AFRINIC signer)
@@ -688,3 +713,68 @@ ns2.nsd.tld.		43200 IN A 172.16.10.10
 ;; MSG SIZE  rcvd: 5304
 
 ```
+17. DNSVIZ probe ($PWD is where the dsset- files are stored) from another host
+```
+$ docker run --network host -v "$PWD:/data:rw" --entrypoint /bin/sh -ti dnsviz/dnsviz
+/data # dnsviz  probe -A -N pdns.tld:ns1.pdns.tld=<member_secondary_dns_ip>:<member_secondary_dns_port>  -N pdns.tld:ns2.pdns.tld=<member_secondary_dns_ip>:<member_secondary_dns_port> -D pdns.tld:dsset-pdns.tld -p pdns.tld > probe-pdns.tld.json
+No global IPv6 connectivity detected
+Analyzing tld (stub)
+Analyzing pdns.tld
+/data #
+```
+
+18. DNSVIZ print result (after doing step 17)
+```
+/data # dnsviz print -r probe-pdns.tld.json
+pdns.tld [-!] [.?]
+  E:NS_NAME_PRIVATE_IP
+  E:SERVER_UNRESPONSIVE_UDP
+  W:GLUE_MISMATCH
+  W:GLUE_MISMATCH
+  [-]  DS: 10/50763/1 [.], 10/50763/2 [.], 10/50763/4 [.]
+  [-]  DNSKEY: 10/50763/257 [.], 10/3617/256 [.]
+  [-]    RRSIG: pdns.tld/10/50763 (2019-08-29 - 2019-09-19) [.]
+  [-!] A: 50.50.50.50
+        E:MISSING_RRSIG
+  [!]  A: TIMEOUT
+  [!]  A: TIMEOUT
+  [-!] NS: ns2.pdns.tld., ns1.pdns.tld.
+        E:MISSING_RRSIG
+  [!]  NS: TIMEOUT
+  [-]  CNAME: NODATA
+  [-]    SOA: ns1.pdns.tld. hostmaster.pdns.tld. 2019090701 7200 3600 604800 43200
+  [-]      RRSIG: pdns.tld/10/3617 (2019-08-29 - 2019-09-19) [.]
+  [-]    PROOF:  [.]
+  [-]      NSEC3: 7BP1OJ535O473ABA3NFTKOBI81PEG134.pdns.tld. 1 0 5 ab FN8T2V47QURFFNHR0KPF353KVDMDJFTA A NS SOA MX TXT RRSIG DNSKEY NSEC3PARAM
+  [-]        RRSIG: pdns.tld/10/3617 (2019-08-29 - 2019-09-19) [.]
+  [-]  SOA: ns1.PdNs.tLd. hostmaster.PdNs.tLd. 2019090701 7200 3600 604800 43200
+  [-]    RRSIG: pdns.tld/10/3617 (2019-08-29 - 2019-09-19) [.]
+  [-]  MX: 10 mail.pdns.tld.
+  [-]    RRSIG: pdns.tld/10/3617 (2019-08-29 - 2019-09-19) [.]
+  [-]  TXT: "Zone data for pdns.tld"
+  [-]    RRSIG: pdns.tld/10/3617 (2019-08-29 - 2019-09-19) [.]
+  [-]  AAAA: NODATA
+  [-]    SOA: ns1.pdns.tld. hostmaster.pdns.tld. 2019090701 7200 3600 604800 43200
+  [-]      RRSIG: pdns.tld/10/3617 (2019-08-29 - 2019-09-19) [.]
+  [-]    PROOF:  [.]
+  [-]      NSEC3: 7BP1OJ535O473ABA3NFTKOBI81PEG134.pdns.tld. 1 0 5 ab FN8T2V47QURFFNHR0KPF353KVDMDJFTA A NS SOA MX TXT RRSIG DNSKEY NSEC3PARAM
+  [-]        RRSIG: pdns.tld/10/3617 (2019-08-29 - 2019-09-19) [.]
+mz769g13j5.pdns.tld
+  [-]  A: NXDOMAIN
+  [-]    SOA: ns1.pdns.tld. hostmaster.pdns.tld. 2019090701 7200 3600 604800 43200
+  [-]      RRSIG: pdns.tld/10/3617 (2019-08-29 - 2019-09-19) [.]
+  [-]    PROOF:  [.]
+  [-]      NSEC3: FN8T2V47QURFFNHR0KPF353KVDMDJFTA.pdns.tld. 1 0 5 ab RC5OSICB1DH9CBJBSGV7H35BCIJTFRIJ CNAME RRSIG
+  [-]        RRSIG: pdns.tld/10/3617 (2019-08-29 - 2019-09-19) [.]
+  [-]      NSEC3: 7BP1OJ535O473ABA3NFTKOBI81PEG134.pdns.tld. 1 0 5 ab FN8T2V47QURFFNHR0KPF353KVDMDJFTA A NS SOA MX TXT RRSIG DNSKEY NSEC3PARAM
+  [-]        RRSIG: pdns.tld/10/3617 (2019-08-29 - 2019-09-19) [.]
+/data #
+```
+We have some connectivity issue which are normal. We have private IPs and some random IP (no real DNS server behind) in the test zone file.
+
+19. DNSSEC graph (after doing step 18)
+```
+/data # dnsviz graph -r probe-pdns.tld.json  -T png -O
+/data #
+```
+![pdns.tld](pdns.tld.png)
