@@ -9,12 +9,13 @@ import os
 
 logging = logger.getLogger(__name__)
 
-API_BASE = os.environ.get('API_BASE', '<afrinic_api_ip_fqdn>')
-API_PORT = os.environ.get('API_PORT', '<afrinic_api_port')
+API_BASE = os.environ.get('API_BASE', 'mdnssec.ri.mu.afrinic.net')
+API_PORT = os.environ.get('API_PORT', '30001')
 API_URL= 'http://' + API_BASE + ':' + API_PORT + '/'
 API_VERSION='api/v1/servers/localhost'
-API_KEY=os.environ.get('API_KEY', '<afrinic_api_key')
-MEMBER_IP=os.environ.get('MEMBER_IP', '192.168.99.1')
+API_KEY=os.environ.get('API_KEY', 'nyo8pUoxZb1AzkD')
+MEMBER_IP=os.environ.get('MEMBER_IP', '196.192.112.222')
+DS_FILES_FOLDER="data"
 headers = {}
 headers['X-API-Key'] = API_KEY
 
@@ -209,29 +210,41 @@ def set_nsec3(zone):
     except Exception as e:
         return {'status': 'error', 'msg': str(e) }
 
-"""
-AFRINIC Member should provide for each domain:
- - a domain name
-    - tsig key in slave mode (to retrieve unsigned zone)
-        - name
-        - algo
-        - key
-        - dns server ip (master)
-    - tsig key in master mode (to send signed zone to member DNS server)
-        - name
-        - algo
-        - key
+def get_ds(zone):
+    try:
+        data = fetch_json(urljoin(API_URL,API_VERSION)  + '/zones/{0}/cryptokeys'.format(zone), headers=headers, method='GET')
+        if 'error' in data:
+            return {'status': 'error', 'msg': 'Cannot get DS for domain '+zone+'. Error: {0}'.format(data['error']), 'data': data}
+        else:
+            for key in data:
+                if key["keytype"] == "ksk":
+                    dsset = key["ds"]
+                    print(dsset)
+                    if dsset:
+                        file = open(DS_FILES_FOLDER + "/dsset-"+zone, "w")
+                        for ds in dsset:
+                            print(ds)
+                            file.write(zone + ". IN DS " + ds + "\n")
+                        file.close()
+                        return {'status': 'ok', 'data': key["ds"]}
+                    else:
+                        return {'status': 'error', 'msg': 'No DS in '+ str(dsset)}
+    except Exception as e:
+        return {'status': 'error', 'msg': str(e) }
 
-AFRINIC shoud provide:
-    - DNS server with Port to retrieve signed zone
-    - For advance members (which would create everything by themselve)
-      - API url
-      - API port
-      - API token
+"""
+dig +short @196.192.112.222  nsd.tld soa                                                                                                                           ✔  10547  22:56:14
+ns1.nsd.tld. hostmaster.nsd.tld. 2019080201 7200 3600 604800 43200
+dig +short @196.192.112.222 pdns.tld soa                                                                                                                          ✔  10548  22:56:23
+ns1.pdns.tld. hostmaster.pdns.tld. 2019080201 7200 3600 604800 43200
+dig +short @196.192.112.222 bind.tld soa                                                                                                                          ✔  10549  22:56:31
+ns1.bind.tld. hostmaster.bind.tld. 2019061102 7200 3600 604800 43200
+
+dig +short @196.192.112.222 -p 530 bind.tld soa
 """
 
 ## Slaves Mode
-tsigkey = create_tsig("nsd_slave", "hmac-sha256", '<nsd_slave_secret_key>')
+tsigkey = create_tsig("nsd_slave", "hmac-sha256", "TlNEX1RTSUdfU0VDUkVUX0tFWQo=")
 print(tsigkey)
 if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
     nsd_tld = create_slave_zone("nsd.tld", tsigkey["data"]["id"], MEMBER_IP)
@@ -240,7 +253,7 @@ if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
         nsd_data = check_axfr(nsd_tld["data"]["name"])
         print(nsd_data)
 
-tsigkey = create_tsig("bind_slave", "hmac-sha256", '<bind_slave_secret_key>')
+tsigkey = create_tsig("bind_slave", "hmac-sha256", "QklORF9UU0lHX1NFQ1JFVF9LRVkK")
 print(tsigkey)
 if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
     nsd_tld = create_slave_zone("bind.tld", tsigkey["data"]["id"], MEMBER_IP)
@@ -249,7 +262,7 @@ if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
         nsd_data = check_axfr(nsd_tld["data"]["name"])
         print(nsd_data)
 
-tsigkey = create_tsig("pdns_slave", "hmac-sha256", '<pdns_slave_secret_key>')
+tsigkey = create_tsig("pdns_slave", "hmac-sha256", "cG93ZXJkbnNfc2VydmVyCg==")
 print(tsigkey)
 if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
     nsd_tld = create_slave_zone("pdns.tld", tsigkey["data"]["id"], MEMBER_IP)
@@ -270,7 +283,8 @@ if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
     print(nsd_signed_zsk)
     nsec3 = set_nsec3("nsd.tld")
     print(nsec3)
-
+    ds = get_ds("nsd.tld")
+    print(ds)
 
 tsigkey = create_tsig("bind_master", "hmac-sha256", "YmluZG1hc3Rlcgo=")
 print(tsigkey)
@@ -283,6 +297,8 @@ if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
     print(bind_signed_zsk)
     nsec3 = set_nsec3("bind.tld")
     print(nsec3)
+    ds = get_ds("bind.tld")
+    print(ds)
 
 tsigkey = create_tsig("pdns_master", "hmac-sha256", "cGRuc3NsYXZla25vdAo=")
 print(tsigkey)
@@ -295,3 +311,5 @@ if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
     print(pdns_signed_zsk)
     nsec3 = set_nsec3("pdns.tld")
     print(nsec3)
+    ds = get_ds("pdns.tld")
+    print(ds)
