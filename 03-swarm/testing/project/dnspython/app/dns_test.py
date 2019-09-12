@@ -217,7 +217,7 @@ def get_ds(zone):
             return {'status': 'error', 'msg': 'Cannot get DS for domain '+zone+'. Error: {0}'.format(data['error']), 'data': data}
         else:
             for key in data:
-                if key["keytype"] == "ksk":
+                if key["keytype"] == "ksk" and key["active"]:
                     dsset = key["ds"]
                     print(dsset)
                     if dsset:
@@ -229,6 +229,22 @@ def get_ds(zone):
                         return {'status': 'ok', 'data': key["ds"]}
                     else:
                         return {'status': 'error', 'msg': 'No DS in '+ str(dsset)}
+    except Exception as e:
+        return {'status': 'error', 'msg': str(e) }
+
+def publish_child_dnssec(zone, type):
+    try:
+        post_data = {}
+        if type == "cds":
+            post_data['kind'] = "PUBLISH-CDS"
+            post_data['metadata'] = ["1","2","4"]
+        elif type == "cdnskey":
+            post_data['kind'] = "PUBLISH-CDNSKEY"
+            post_data['metadata'] = ["1"]
+        data = fetch_json(urljoin(API_URL,API_VERSION)  + '/zones/{0}/metadata'.format(zone), headers=headers, method='POST', data=post_data)
+        if 'error' in data:
+            return {'status': 'error', 'msg': 'Cannot publish '+type+' for zone '+ zone +'. Error: {0}'.format(data['error']), 'data': data}
+        return {'status': 'ok', 'data': str(data)}
     except Exception as e:
         return {'status': 'error', 'msg': str(e) }
 
