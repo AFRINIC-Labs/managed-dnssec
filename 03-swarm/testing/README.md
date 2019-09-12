@@ -210,7 +210,7 @@ ns2.nsd.tld.		43200	IN	A	172.16.10.10
 ---
 **TODO**
 
-Restrict any query to dedicated servers/IP. Check [allow-axfr-ips](https://doc.powerdns.com/authoritative/settings.html#allow-axfr-ips)
+Restrict any query to dedicated servers/IP. Check [Knot ACL](https://www.knot-dns.cz/docs/2.8/html/configuration.html#access-control-list-acl) and/or [PowerDNS zone metadata](https://doc.powerdns.com/authoritative/domainmetadata.html).
 
 ---
 

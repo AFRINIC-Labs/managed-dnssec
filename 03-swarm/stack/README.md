@@ -259,3 +259,11 @@ From step `12`, we can start using PowerDNS API. See [testing](../testing) for a
 8. Create DNSSEC cryptokeys (KSK/ZSK or CSK)
 9. Check is zone is signed
 10. Get signed zone on member DNS server
+
+### Other Configs ###
+According to [Per zone settings: Domain Metadata](https://doc.powerdns.com/authoritative/domainmetadata.html), following metadata could be defined for each zone.
+* PUBLISH-CDNSKEY 1
+* PUBLISH-CDS 1 2 4
+* ALLOW-AXFR-FROM AUTO-NS <AFRINIC_IP>
+* ALSO-NOTIFY <AFRINIC_IP>:<AFRINIC_PORT>
+* extra metadata with "X-"
