@@ -46,6 +46,10 @@ Member should provide:
 Keyroll are managed in PowerDNS for [ksk roll](https://doc.powerdns.com/authoritative/guides/kskroll.html) and [zsk](https://doc.powerdns.com/authoritative/guides/zskroll.html). NSEC3 parameters are set to **'1 0 1 ab'** according to [NSEC modes and parameters](https://doc.powerdns.com/authoritative/dnssec/operational.html#setting-the-nsec-modes-and-parameters).
 
 ### How to ###
+0. Clone the repositry and change folder
+```
+git clone git@github.com:AFRINIC-Labs/managed-dnssec.git && cd managed-dnssec
+```
 1. Prepare vault authentication parameters
 We assume that `remote_user` can use `sudo` on remote server. Remote server IP/domain is added to in `inventory` file ie replace *<test_server_ip_fqdn>* by the test server.
 
@@ -216,7 +220,7 @@ Restrict any query to dedicated servers/IP. Check [Knot ACL](https://www.knot-dn
 
 10. Check zones and tsig keys info
 ```
-curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones | jq .
+curl  -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones | jq .
 
 [
   {
@@ -267,7 +271,7 @@ curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_a
 ]
 
 
-curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/tsigkeys | jq .
+curl -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/tsigkeys | jq .
 
 [
   {
@@ -319,7 +323,7 @@ curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_a
 
 11. Export zone from API
 ```
-curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/export
+curl  -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/export
 
 mail.nsd.tld.	43200	IN	A	20.20.20.20
 ns1.nsd.tld.	43200	IN	A	172.16.10.5
@@ -336,7 +340,7 @@ www.nsd.tld.	43200	IN	CNAME	nsd.tld.
 
 12. Get all info about nsd.tld
 ```
-curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld | jq .
+curl  -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld | jq .
 
 {
   "account": "",
@@ -483,7 +487,7 @@ curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_a
 
 13. Get metadata
 ```
-curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/metadata| jq .
+curl -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/metadata| jq .
 
 [
   {
@@ -527,7 +531,7 @@ curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_a
 
 14. Check one zone cryptokeys
 ```
-curl  -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/cryptokeys | jq .
+curl -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/cryptokeys | jq .
 
 [
   {
