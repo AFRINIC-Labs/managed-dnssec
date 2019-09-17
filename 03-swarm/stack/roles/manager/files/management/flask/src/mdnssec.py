@@ -571,14 +571,26 @@ def create_customer(orgId):
 
 def configure_slave(channel, repl, port=3306):
     try:
+        # Check if slave is already running
+        running = False
+        query_db = text('use performance_schema')
+        result = db.get_engine(bind='slave').execute(query_db)
+        query_check = text('SELECT CHANNEL_NAME FROM replication_connection_status where CHANNEL_NAME="' + channel + '"')
+        result = db.get_engine(bind='slave').execute(query_check)
+        for row in result:
+            if channel == row['CHANNEL_NAME']:
+                running = True
+                break
+
         # run query
-        query_change = text('CHANGE MASTER TO MASTER_HOST="' + repl["host"] +'", MASTER_USER="' + repl["user"] + '", MASTER_PASSWORD="' + repl["password"] + '", MASTER_PORT='+ str(port) +', MASTER_AUTO_POSITION = 1 FOR CHANNEL "' + channel + '"')
-        print("[configure_slave] Changing master on slave")
-        print(query_change)
-        print(repl)
-        result = db.get_engine(bind='slave').execute(query_change)
-        query_start = text('START SLAVE FOR CHANNEL "' + channel + '"')
-        result = db.get_engine(bind='slave').execute(query_start)
+        if not running:
+            query_change = text('CHANGE MASTER TO MASTER_HOST="' + repl["host"] +'", MASTER_USER="' + repl["user"] + '", MASTER_PASSWORD="' + repl["password"] + '", MASTER_PORT='+ str(port) +', MASTER_AUTO_POSITION = 1 FOR CHANNEL "' + channel + '"')
+            print("[configure_slave] Changing master on slave")
+            print(query_change)
+            print(repl)
+            result = db.get_engine(bind='slave').execute(query_change)
+            query_start = text('START SLAVE FOR CHANNEL "' + channel + '"')
+            result = db.get_engine(bind='slave').execute(query_start)
     except Exception as err:
         raise err
 
