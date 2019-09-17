@@ -25,15 +25,16 @@ The `stack` folder is used by the `stack_api` to deploy AFRINIC member DNSSEC si
 * Signer Stack API **http**: each member signer (PowerDNS) API will use a dedicated port starting `30000`.
 * **dns**: each member signer will use a dedicated port starting `8000`.
 
-| Action                             | HTTP Verb           | Parameters            | Required authentication | Url                                                                                |Result                                     |
-|------------------------------------|:-------------------:|-----------------------|-------------------------|------------------------------------------------------------------------------------|------------------------------------------|
-| General info                       | ``GET``             | None                  | X-Auth-Token: TOKEN     | http://<swarm_manager_ip_or_fqdn>:5005/api/v1/info                                 | Container network information             |
-| Check if docker dameon is running  | ``GET`` or ``POST`` | None                  | X-Auth-Token: TOKEN     | http://<swarm_manager_ip_or_fqdn>:5005/api/v1/docker                               | Docker client status                      |
-| List all members in the stack      | ``POST``            | None                  | X-Auth-Token: TOKEN     | http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack                                | Array of **Member Stack Name **           |
-| Deploy new stack (for a member)    | ``POST``            | Member AFRINIC Org ID | X-Auth-Token: TOKEN     | http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/deploy/{member_afrinic_org_id} | New **Member Stack Name ** with metadata  |
-| Get metadata on a member stack     | ``POST``            | Member Stack Name     | X-Auth-Token: TOKEN     | http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/info/{member_stack_id}         | Member Stack metadata                     |
-| Remove member stack                |``POST``             | Member Stack Name     | X-Auth-Token: TOKEN     | http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/remove/{member_stack_id}       |  Removed **Member Stack Name **          |
+| Action                             | HTTP Verb           | Parameters            | Required authentication | Url                                   | Result                                   | 
+|------------------------------------|:-------------------:|-----------------------|-------------------------|---------------------------------------|------------------------------------------|
+| General info                       | ``GET``             | None                  | X-Auth-Token: TOKEN     | /info                                 | Container network information            |
+| Check if docker dameon is running  | ``GET`` or ``POST`` | None                  | X-Auth-Token: TOKEN     | /docker                               | Docker client status                     |
+| List all members in the stack      | ``POST``            | None                  | X-Auth-Token: TOKEN     | /stack                                | Array of **Member Stack Name**           |
+| Deploy new stack (for a member)    | ``POST``            | Member AFRINIC Org ID | X-Auth-Token: TOKEN     | /stack/deploy/{member_afrinic_org_id} | New **Member Stack Name** with metadata  |
+| Get metadata on a member stack     | ``POST``            | Member Stack Name     | X-Auth-Token: TOKEN     | /stack/info/{member_stack_id}         | Member Stack metadata                    |
+| Remove member stack                | ``POST``            | Member Stack Name     | X-Auth-Token: TOKEN     | /stack/remove/{member_stack_id}       |  Removed **Member Stack Name**           |
 
+All paths are relative to ``http://<swarm_manager_ip_or_fqdn>:5005/api/v1``.
 ### Mini documentation ###
 1. Prepare vault authentication parameters
 We assume that `remote_user` can use `sudo` on remote server. Remote server IP/domain is added in group `managers` in `inventory` file ie replace *<swarm_manager_ip_or_fqdn>* by the swarm server.
