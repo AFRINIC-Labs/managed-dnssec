@@ -782,3 +782,216 @@ We have some connectivity issue which are normal. We have private IPs and some r
 /data #
 ```
 ![pdns.tld](pdns.tld.png)
+
+### RRSIGs validity period ###
+According to PowerDNS doc on [Signatures](https://doc.powerdns.com/authoritative/dnssec/modes-of-operation.html#signatures), RRSIGs has a validity period of 3 weeks.
+
+But as of today (Wednesday September 18, 2019), on the member DNS server, the RRSIG will expire on `20190919000000` ie the old RRSIG is still used.
+
+```
+dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port>  nsd.tld soa  +dnssec +multiline
+
+; <<>> DiG 9.14.4 <<>> @<member_secondary_dns_ip> -p <member_secondary_dns_port> nsd.tld soa +dnssec +multiline
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 51214
+;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 4096
+;; QUESTION SECTION:
+;nsd.tld.		IN SOA
+
+;; ANSWER SECTION:
+nsd.tld.		43200 IN SOA ns1.nsd.tld. hostmaster.nsd.tld. (
+				2019090801 ; serial
+				7200       ; refresh (2 hours)
+				3600       ; retry (1 hour)
+				604800     ; expire (1 week)
+				43200      ; minimum (12 hours)
+				)
+nsd.tld.		43200 IN RRSIG SOA 10 2 43200 (
+				20190919000000 20190829000000 33728 nsd.tld.
+				F4KR73cVobHn6t5csJ6B0uOIrzjpBQVl9UXzqPx4s4YP
+				EKgvHtXyK+HN6SaIftVVMlJ/RgTPR8/EeGbxiBXvWqCE
+				JjyCb9xAHlKZDcKmBpSxFYfW0ra7xrubg/L18kulhDkt
+				NCauBBdXjQWxO1b287h6RhG1njIUUoM+d7fIZ0E= )
+
+;; Query time: 354 msec
+;; SERVER: <member_secondary_dns_ip>#<member_secondary_dns_port>(<member_secondary_dns_ip>)
+;; WHEN: Wed Sep 18 20:52:42 WAT 2019
+;; MSG SIZE  rcvd: 254
+
+```
+
+This behavior is not what it is supposed to happen. From PowerDNS doc
+
+> The inception timestamp is the most recent Thursday 00:00:00 UTC, which is exactly one week ago at the moment of rollover".
+
+On the signer, we get expected response.
+
+
+```
+dig  @<afrinic_dns_ip> -p <afrinic_dns_port>  nsd.tld soa  +dnssec +multiline
+
+; <<>> DiG 9.14.4 <<>> @<afrinic_dns_ip> -p <afrinic_dns_port> nsd.tld soa +dnssec +multiline
+; (2 servers found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 58118
+;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 1232
+;; QUESTION SECTION:
+;nsd.tld.		IN SOA
+
+;; ANSWER SECTION:
+nsd.tld.		43200 IN RRSIG SOA 10 2 43200 (
+				20190926000000 20190905000000 33728 nsd.tld.
+				w7RELOKfO9+RBxoB2l3Q92D4cnc1SL19CFHALBBI1FGu
+				VLTE7zNznByq6gSdx6EanUsBlUZV9KOoGtJSC8MRWZh0
+				bUz5wxs/d3BdYq/wAiPI5jWS99ucX70UMeRUjcfNUoIg
+				F+RNdZyJPBEgAT8K63kgHImUMZYYSdq1OSfsHFo= )
+nsd.tld.		43200 IN SOA ns1.nsd.tld. hostmaster.nsd.tld. (
+				2019090801 ; serial
+				7200       ; refresh (2 hours)
+				3600       ; retry (1 hour)
+				604800     ; expire (1 week)
+				43200      ; minimum (12 hours)
+				)
+
+;; Query time: 403 msec
+;; SERVER: <afrinic_dns_ip>#<afrinic_dns_port>(<afrinic_dns_ip>)
+;; WHEN: Wed Sep 18 20:58:11 WAT 2019
+;; MSG SIZE  rcvd: 254
+
+```
+
+Now, we have new RRSIG with `20190926000000` as expiration. But the serial still the same: `2019090801`. From [PowerDNS soa-edit metadata](https://doc.powerdns.com/authoritative/dnssec/operational.html#soa-edit-ensure-signature-freshness-on-slaves):
+
+> With PowerDNS in Live-signing mode, the SOA serial is not increased by default when the RRSIG dates are rolled." 
+
+Thus the member DNS server will not update the zone with new RRSIGs. The PowerDNS solution is to set the `SOA-EDIT` metadata for DNSSEC signed zones. Currently, `SOA-EDIT` is empty.
+
+```
+curl -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/metadata/SOA-EDIT | jq .
+
+{
+  "kind": "SOA-EDIT",
+  "metadata": [],
+  "type": "Metadata"
+}
+
+```
+
+We add metadata `INCEPTION-INCREMENT` to  `SOA-EDIT`.
+
+```
+curl -s -H 'X-API-Key: <afrinic_api_key>' -X POST -d '{"kind": "SOA-EDIT", "metadata":["INCEPTION-INCREMENT"]}' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/metadata | jq .
+
+{
+  "kind": "SOA-EDIT",
+  "metadata": [
+    "INCEPTION-INCREMENT"
+  ],
+  "type": "Metadata"
+}
+
+```
+We can notice a change on the zone serial to `2019091201` (old was `2019090801`) on the signer side.
+
+```
+dig  @<afrinic_dns_ip>  -p <afrinic_dns_port>  nsd.tld soa  +dnssec +multiline
+
+; <<>> DiG 9.14.4 <<>> @<afrinic_dns_ip> -p <afrinic_dns_port> nsd.tld soa +dnssec +multiline
+; (2 servers found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 27255
+;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 1232
+;; QUESTION SECTION:
+;nsd.tld.		IN SOA
+
+;; ANSWER SECTION:
+nsd.tld.		43200 IN RRSIG SOA 10 2 43200 (
+				20190926000000 20190905000000 33728 nsd.tld.
+				kIpk2bRUl6bF5Y20SNM8fRert1PPhn9y6JOPGzGTJOb/
+				sUZWKr/SXdF08YPg4Uxxyz2KqM9p60xSLuqj3OMgh5v7
+				94HUlfJeESCIHPI8OZzTtZpSaJVrzWdmEKRQ2OPqPw4X
+				GQsbvoR9GXw3e0wrtkzOtjGScBdkx0kOR+LaUMo= )
+nsd.tld.		43200 IN SOA ns1.nsd.tld. hostmaster.nsd.tld. (
+				2019091201 ; serial
+				7200       ; refresh (2 hours)
+				3600       ; retry (1 hour)
+				604800     ; expire (1 week)
+				43200      ; minimum (12 hours)
+				)
+
+;; Query time: 371 msec
+;; SERVER: <afrinic_dns_ip>#<afrinic_dns_port>(<afrinic_dns_ip>)
+;; WHEN: Wed Sep 18 21:37:57 WAT 2019
+;; MSG SIZE  rcvd: 254
+
+```
+
+On the member DNS server (zone refresh request may be necessary), we have for the same zone new RRSIGs with new SOA.
+
+```
+dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port>  nsd.tld soa  +dnssec +multiline
+
+; <<>> DiG 9.14.4 <<>> @<member_secondary_dns_ip> -p <member_secondary_dns_port> nsd.tld soa +dnssec +multiline
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 41101
+;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 4096
+;; QUESTION SECTION:
+;nsd.tld.		IN SOA
+
+;; ANSWER SECTION:
+nsd.tld.		43200 IN SOA ns1.nsd.tld. hostmaster.nsd.tld. (
+				2019091201 ; serial
+				7200       ; refresh (2 hours)
+				3600       ; retry (1 hour)
+				604800     ; expire (1 week)
+				43200      ; minimum (12 hours)
+				)
+nsd.tld.		43200 IN RRSIG SOA 10 2 43200 (
+				20190926000000 20190905000000 33728 nsd.tld.
+				kIpk2bRUl6bF5Y20SNM8fRert1PPhn9y6JOPGzGTJOb/
+				sUZWKr/SXdF08YPg4Uxxyz2KqM9p60xSLuqj3OMgh5v7
+				94HUlfJeESCIHPI8OZzTtZpSaJVrzWdmEKRQ2OPqPw4X
+				GQsbvoR9GXw3e0wrtkzOtjGScBdkx0kOR+LaUMo= )
+
+;; Query time: 625 msec
+;; SERVER: <member_secondary_dns_ip>#<member_secondary_dns_port>(<member_secondary_dns_ip>)
+;; WHEN: Wed Sep 18 21:56:49 WAT 2019
+;; MSG SIZE  rcvd: 254
+
+```
+
+For testing purpose, we may need to add member DNS server IP:PORT as `ALSO-NOTIFY` metadata.
+
+```
+curl -s -H 'X-API-Key: <afrinic_api_key>' -X POST -d '{"kind": "ALSO-NOTIFY", "metadata":["<member_secondary_dns_ip>:<member_secondary_dns_port>"]}' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/metadata | jq .
+
+{
+  "kind": "ALSO-NOTIFY",
+  "metadata": [
+    "<member_secondary_dns_ip>:<member_secondary_dns_port>"
+  ],
+  "type": "Metadata"
+}
+```
