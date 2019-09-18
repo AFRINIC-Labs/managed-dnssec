@@ -248,6 +248,19 @@ def publish_child_dnssec(zone, type):
     except Exception as e:
         return {'status': 'error', 'msg': str(e) }
 
+def set_soa(zone):
+    try:
+        post_data = {
+            "kind": "SOA-EDIT",
+            "metadata": ["INCEPTION-INCREMENT"]
+        }
+        data = fetch_json(urljoin(API_URL,API_VERSION)  + '/zones/{0}/metadata'.format(zone), headers=headers, method='POST', data=post_data)
+        if 'error' in data:
+            return {'status': 'error', 'msg': 'Cannot set  soa for zone '+ zone +'. Error: {0}'.format(data['error']), 'data': data}
+        return {'status': 'ok', 'data': str(data)}
+    except Exception as e:
+        return {'status': 'error', 'msg': str(e) }
+
 """
 dig +short @196.192.112.222  nsd.tld soa                                                                                                                           ✔  10547  22:56:14
 ns1.nsd.tld. hostmaster.nsd.tld. 2019080201 7200 3600 604800 43200
@@ -293,6 +306,8 @@ print(tsigkey)
 if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
     nsd_master = set_master("nsd.tld", tsigkey["data"]["id"])
     print(nsd_master)
+    nsd_soa = set_soa("nsd.tld")
+    print(nsd_soa)
     nsd_signed_ksk = create_cryptokeys("nsd.tld", "ksk", "rsasha512", True, 2048)
     print(nsd_signed_ksk)
     nsd_signed_zsk = create_cryptokeys("nsd.tld", "zsk", "rsasha512", True, 1024)
@@ -307,6 +322,8 @@ print(tsigkey)
 if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
     bind_master = set_master("bind.tld", tsigkey["data"]["id"])
     print(bind_master)
+    bind_soa = set_soa("bind.tld")
+    print(bind_soa)
     bind_signed_ksk = create_cryptokeys("bind.tld", "ksk", "rsasha512", True, 2048)
     print(bind_signed_ksk)
     bind_signed_zsk = create_cryptokeys("bind.tld", "zsk", "rsasha512", True, 1024)
@@ -321,6 +338,8 @@ print(tsigkey)
 if tsigkey['status'] == 'ok' and tsigkey["data"]["id"]:
     pdns_master = set_master("pdns.tld", tsigkey["data"]["id"])
     print(pdns_master)
+    pdns_soa = set_soa("pdns.tld")
+    print(pdns_soa)
     pdns_signed_ksk = create_cryptokeys("pdns.tld", "ksk", "rsasha512", True, 2048)
     print(pdns_signed_ksk)
     pdns_signed_zsk = create_cryptokeys("pdns.tld", "zsk", "rsasha512", True, 1024)
