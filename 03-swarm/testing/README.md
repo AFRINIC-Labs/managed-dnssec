@@ -85,6 +85,7 @@ MEMBER_IP=<member_primary_dns_ip>
 AFRINIC should provide **API_** related information. Those information will be used by the External APP to create TSIG keys, zones, cryptokeys to sign zone.
 
 5. Set TSIG keys for member primary (from primary to signer)
+```
 vim project/etc/nsd/conf/nsd.conf
 [...]
 
@@ -120,8 +121,10 @@ zone:
   zonefile: "bind.tld.zone"
   notify: <afrinic_dns_ip> bind_slave
   provide-xfr: <afrinic_dns_ip> bind_slave
+```
 
 6. Set TSIG parameters for member secondary (from signer to secondary)
+```
 vim project/etc/knot/config/knot.conf
 [...]
 
@@ -166,6 +169,7 @@ acl:
     address: <afrinic_dns_ip>
     key: pdns_master.
     action: notify
+```
 
 7. Run the playbook
 ```
@@ -192,7 +196,7 @@ This script process as follow:
 * Create cryptokeys (ksk and zsk) for each zone.
 * Update NSEC3 param
 
-Connect to the container (project_dns_api)
+Connect to the container (project_dns_api) id
 
 ```
 docker exec -it f2ac46c35b8a /bin/sh
