@@ -36,7 +36,12 @@ The `stack` folder is used by the `stack_api` to deploy AFRINIC member DNSSEC si
 
 All paths are relative to ``http://<swarm_manager_ip_or_fqdn>:5005/api/v1``.
 ### Mini documentation ###
-1. Prepare vault authentication parameters
+1. Add vault password in file
+```
+echo "vault_super_password" > .vault_pass.txt
+```
+
+2. Prepare vault authentication parameters
 We assume that `remote_user` can use `sudo` on remote server. Remote server IP/domain is added in group `managers` in `inventory` file ie replace *<swarm_manager_ip_or_fqdn>* by the swarm server.
 ```
 ansible-vault create group_vars/managers/vault.yml
@@ -44,10 +49,6 @@ ansible-vault create group_vars/managers/vault.yml
 vault_ssh_pass: <remote_user_password>
 vault_ssh_user: <remote_user>
 
-```
-2. Add vault password in file
-```
-echo "vault_super_password" > .vault_pass.txt
 ```
 3. Add vault password file in ansible.cfg (it should be done already).
 ```

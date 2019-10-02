@@ -33,7 +33,7 @@ Member should provide:
 2. TSIG key(s) for zone transfer to AFRINIC DNS (name, algo, key).
 3. Primary DNS IP for zone transfer to AFRINIC (`<member_primary_dns_ip>`/ `<member_primary_dns_port>`). In this lab, we use NSD as primary DNS.
 4. TSIG key(s) for zone transfer from AFRINIC DNS (name, algo, key) to their DNS server.
-5. Cryptokeys information (not yet implemented). In this test a KSK and a ZSK are created with followinf parameters:
+5. Cryptokeys information (not yet implemented). In this test a KSK and a ZSK are created with following parameters:
     1. ksk
         1. "algorithm": "rsasha512"
         2. "bits": 2048
@@ -51,7 +51,7 @@ Keyroll are managed in PowerDNS for [ksk roll](https://doc.powerdns.com/authorit
 git clone git@github.com:AFRINIC-Labs/managed-dnssec.git && cd managed-dnssec
 ```
 1. Prepare vault authentication parameters
-We assume that `remote_user` can use `sudo` on remote server. Remote server IP/domain is added to in `inventory` file ie replace *<test_server_ip_fqdn>* by the test server.
+We assume that `remote_user` can use `sudo` on remote server. Remote server IP/domain is added to in `inventory` file ie replace `<test_server_ip_fqdn>` by the test server.
 
 ```
 ansible-vault create group_vars/all/vault.yml
@@ -84,11 +84,94 @@ MEMBER_IP=<member_primary_dns_ip>
 ```
 AFRINIC should provide **API_** related information. Those information will be used by the External APP to create TSIG keys, zones, cryptokeys to sign zone.
 
-5. Run the playbook
+5. Set TSIG keys for member primary (from primary to signer)
+vim project/etc/nsd/conf/nsd.conf
+[...]
+
+key:
+  name: "nsd_slave"
+  algorithm: hmac-sha256
+  secret: <nsd_slave_secret_key>
+
+key:
+  name: "pdns_slave"
+  algorithm: hmac-sha256
+  secret: <pdns_slave_secret_key>
+
+key:
+  name: "bind_slave"
+  algorithm: hmac-sha256
+  secret: <bind_slave_secret_key>
+
+zone:
+  name: "nsd.tld"
+  zonefile: "nsd.tld.zone"
+  notify: <afrinic_dns_ip> nsd_slave
+  provide-xfr: <afrinic_dns_ip> nsd_slave
+
+zone:
+  name: "pdns.tld"
+  zonefile: "pdns.tld.zone"
+  notify: <afrinic_dns_ip> pdns_slave
+  provide-xfr: <afrinic_dns_ip> pdns_slave
+
+zone:
+  name: "bind.tld"
+  zonefile: "bind.tld.zone"
+  notify: <afrinic_dns_ip> bind_slave
+  provide-xfr: <afrinic_dns_ip> bind_slave
+
+6. Set TSIG parameters for member secondary (from signer to secondary)
+vim project/etc/knot/config/knot.conf
+[...]
+
+key:
+  - id: bind_master.
+    algorithm: hmac-sha256
+    secret: <bind_master_secret_key>
+
+  - id: nsd_master.
+    algorithm: hmac-sha256
+    secret: <nsd_master_secret_key>
+
+  - id: pdns_master.
+    algorithm: hmac-sha256
+    secret: <pdns_master_secret_key>
+
+remote:
+  - id: master_bind
+    address: <afrinic_dns_ip>@<afrinic_dns_port>
+    key: bind_master.
+
+  - id: master_nsd
+    address: <afrinic_dns_ip>@<afrinic_dns_port>
+    key: nsd_master.
+
+  - id: master_pdns
+    address: <afrinic_dns_ip>@<afrinic_dns_port>
+    key: pdns_master.
+
+acl:
+  - id: notify_from_master_bind
+    address: <afrinic_dns_ip>
+    key: bind_master.
+    action: notify
+
+  - id: notify_from_master_nsd
+    address: <afrinic_dns_ip>
+    key: nsd_master.
+    action: notify
+
+  - id: notify_from_master_pdns
+    address: <afrinic_dns_ip>
+    key: pdns_master.
+    action: notify
+
+7. Run the playbook
 ```
 ansible-playbook axfr_env.yml
 ```
-6. check if external app is running
+8. check if external app is running
 ```
 $ docker ps
 
@@ -98,7 +181,7 @@ f2ac46c35b8a        project_dns_api             "python -u ./app.py"     49 seco
 e07e9a285309        project_nsd_authoritative   "run.sh"                 About a minute ago   Up About a minute (healthy)   0.0.0.0:53->53/tcp, 0.0.0.0:53->53/udp     nsd_in
 
 ```
-7. Run python script on external app
+9. Run python script on external app
 This script process as follow:
 
 * Create slave mode TSIG keys.
@@ -108,6 +191,8 @@ This script process as follow:
 * Change zone mode to master and assign master TSIG keys to it.
 * Create cryptokeys (ksk and zsk) for each zone.
 * Update NSEC3 param
+
+Connect to the container (project_dns_api)
 
 ```
 docker exec -it f2ac46c35b8a /bin/sh
@@ -163,7 +248,7 @@ bind.tld. IN DS 23277 10 4 e83783e3d8fe1e84212c57af3e195722b53c5b7259c67cdd65a45
 
 
 ```
-8. Test if zone transfer is working (from customer primary to AFRINIC signer)
+10. Test if zone transfer is working (from customer primary to AFRINIC signer)
 ```
 dig @<afrinic_dns_ip> -p <afrinic_dns_port> pdns.tld soa +short
 ns1.pdns.tld. hostmaster.pdns.tld. 2019090501 7200 3600 604800 43200
@@ -175,7 +260,7 @@ dig @<afrinic_dns_ip> -p <afrinic_dns_port> nsd.tld soa +short
 ns1.nsd.tld. hostmaster.nsd.tld. 2019090501 7200 3600 604800 43200
 ```
 
-9. Get nsd.tld zone
+11. Get nsd.tld zone
 ```
 dig @<afrinic_dns_ip> -p <afrinic_dns_port> nsd.tld any
 
@@ -218,7 +303,7 @@ Restrict any query to dedicated servers/IP. Check [Knot ACL](https://www.knot-dn
 
 ---
 
-10. Check zones and tsig keys info
+12. Check zones and tsig keys info
 ```
 curl  -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones | jq .
 
@@ -321,7 +406,7 @@ curl -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic
 
 ```
 
-11. Export zone from API
+13. Export zone from API
 ```
 curl  -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/export
 
@@ -338,7 +423,7 @@ www.nsd.tld.	43200	IN	CNAME	nsd.tld.
 
 ```
 
-12. Get all info about nsd.tld
+14. Get all info about nsd.tld
 ```
 curl  -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld | jq .
 
@@ -485,7 +570,7 @@ curl  -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrini
 
 ```
 
-13. Get metadata
+15. Get metadata
 ```
 curl -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/metadata| jq .
 
@@ -529,7 +614,7 @@ curl -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic
 
 ```
 
-14. Check one zone cryptokeys
+16. Check one zone cryptokeys
 ```
 curl -s -H 'X-API-Key: <afrinic_api_key>' http://<afrinic_api_ip_fqdn>:</afrinic_api_port>/api/v1/servers/localhost/zones/nsd.tld/cryptokeys | jq .
 
@@ -570,7 +655,7 @@ According to this [bug report](https://github.com/PowerDNS/pdns/issues/5330), "i
 
 ---
 
-15. Check if signed zone is available on customer DNS server using TSIG
+17. Check if signed zone is available on customer DNS server using TSIG
 ```
 dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port> nsd.tld dnskey +multiline
 
@@ -611,7 +696,7 @@ nsd.tld.		43200 IN DNSKEY	257 3 10 (
 ;; MSG SIZE  rcvd: 460
 
 ```
-16. Full signed zone from customer DNS server
+18. Full signed zone from customer DNS server
 ```
 dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port> nsd.tld +dnssec +multiline any
 
@@ -717,7 +802,7 @@ ns2.nsd.tld.		43200 IN A 172.16.10.10
 ;; MSG SIZE  rcvd: 5304
 
 ```
-17. DNSVIZ probe ($PWD is where the dsset- files are stored) from another host
+19. DNSVIZ probe ($PWD is where the dsset- files are stored) from another host
 ```
 $ docker run --network host -v "$PWD:/data:rw" --entrypoint /bin/sh -ti dnsviz/dnsviz
 /data # dnsviz  probe -A -N pdns.tld:ns1.pdns.tld=<member_secondary_dns_ip>:<member_secondary_dns_port>  -N pdns.tld:ns2.pdns.tld=<member_secondary_dns_ip>:<member_secondary_dns_port> -D pdns.tld:dsset-pdns.tld -p pdns.tld > probe-pdns.tld.json
@@ -727,7 +812,7 @@ Analyzing pdns.tld
 /data #
 ```
 
-18. DNSVIZ print result (after doing step 17)
+20. DNSVIZ print result (after doing step 17)
 ```
 /data # dnsviz print -r probe-pdns.tld.json
 pdns.tld [-!] [.?]
@@ -776,7 +861,7 @@ mz769g13j5.pdns.tld
 ```
 We have some connectivity issue which are normal. We have private IPs and some random IP (no real DNS server behind) in the test zone file.
 
-19. DNSSEC graph (after doing step 18)
+21. DNSSEC graph (after doing step 18)
 ```
 /data # dnsviz graph -r probe-pdns.tld.json  -T png -O
 /data #
@@ -826,9 +911,9 @@ nsd.tld.		43200 IN RRSIG SOA 10 2 43200 (
 
 ```
 
-This behavior is not what it is supposed to happen. From PowerDNS doc
+This behavior is not what it is supposed to happen. From PowerDNS doc:
 
-> The inception timestamp is the most recent Thursday 00:00:00 UTC, which is exactly one week ago at the moment of rollover".
+> The inception timestamp is the most recent Thursday 00:00:00 UTC, which is exactly one week ago at the moment of rollover.
 
 On the signer, we get expected response.
 
@@ -873,7 +958,7 @@ nsd.tld.		43200 IN SOA ns1.nsd.tld. hostmaster.nsd.tld. (
 
 Now, we have new RRSIG with `20190926000000` as expiration. But the serial still the same: `2019090801`. From [PowerDNS soa-edit metadata](https://doc.powerdns.com/authoritative/dnssec/operational.html#soa-edit-ensure-signature-freshness-on-slaves):
 
-> With PowerDNS in Live-signing mode, the SOA serial is not increased by default when the RRSIG dates are rolled." 
+> With PowerDNS in Live-signing mode, the SOA serial is not increased by default when the RRSIG dates are rolled.
 
 Thus the member DNS server will not update the zone with new RRSIGs. The PowerDNS solution is to set the `SOA-EDIT` metadata for DNSSEC signed zones. Currently, `SOA-EDIT` is empty.
 
