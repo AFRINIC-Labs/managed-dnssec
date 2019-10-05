@@ -4,7 +4,7 @@ docker_compose_arch: x86_64
 
 
 replication_net: db_replication_net
-management_api: stack_api
+management_api: STACK_API
 
 private_registry: registry.mdnssec.ri.mu.afrinic.net
 private_registry_port: 5000
@@ -37,6 +37,16 @@ signer_api: signer-api
 signer_api_tag: 1.0
 signer_api_port: 5005
 signer_api_resources:
+  limits:
+    cpus: '0.3'
+    memory: 256M
+  reservations:
+    cpus: '0.1'
+    memory: 128M
+
+nginx_api: nginx-proxy
+nginx_api_tag: 1.0
+nginx_api_resources:
   limits:
     cpus: '0.3'
     memory: 256M
