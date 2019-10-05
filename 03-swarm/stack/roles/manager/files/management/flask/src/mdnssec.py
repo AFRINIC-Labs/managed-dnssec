@@ -57,6 +57,7 @@ REPLICATION_PASS = os.environ.get('REPLICATION_PASS',"qocUcsPQiKuhTJQnIR89b25rCm
 SERVER_ID = os.environ.get('SERVER_ID', 4294967285)
 APP_ENV = os.environ.get('APP_ENV', 'Dev')
 REPLICATION_CHANNEL = os.environ.get('REPLICATION_CHANNEL', 'stack_api')
+WORKER_NODE = os.environ.get('WORKER_NODE', 'HOST')
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqldb://'+ os.environ.get('MYSQL_USER', 'root') + ':'+ os.environ.get('MYSQL_PASSWORD', 'toor') + '@' + os.environ.get('MYSQL_HOST', 'localhost') +'/' + os.environ.get('MYSQL_DATABASE', 'mdnssec')
@@ -290,7 +291,7 @@ def stack_deploy(orgId):
     print("[stack_deploy]: Running stack deploy...")
 
     api_data['stack'] = namespace
-    api_data['url'] = "curl -v -H 'X-API-Key: " + str(api_data['api_key']) + "' http://HOST:"+ str(api_data['api_port']) +"/api/v1/servers/localhost"
+    api_data['url'] = "curl -v -H 'X-API-Key: " + str(api_data['api_key']) + "' http://" + WORKER_NODE + ":"+ str(api_data['api_port']) +"/api/v1/servers/localhost"
     if not err:
         # Update Customer and set enable to True
         customer = Customer.query.filter_by(namespace=namespace).first()
@@ -377,7 +378,7 @@ def stack_info(namespace):
                 data['api_port'] = customer.api_port
                 data['dns_port'] = customer.dns_port
                 data['stack'] = namespace
-                data['url'] = "curl -v -H 'X-API-Key: " + str(customer.api_key) + "' http://HOST:"+ str(customer.api_port) +"/api/v1/servers/localhost"
+                data['url'] = "curl -v -H 'X-API-Key: " + str(customer.api_key) + "' http://" + WORKER_NODE + ":"+ str(customer.api_port) +"/api/v1/servers/localhost"
                 return jsonify( {'status': 'OK', 'output': data, 'error': err })
             else:
                 return jsonify( {'status': 'KO', 'output': namespace + " not deployed" , 'error': err })
@@ -458,25 +459,40 @@ def create_customer(orgId):
         'dns_port': dns_port
         }
 
-        replication_user = "rep_" + namespace
         repl_data = {}
+        mysql_host = "DB_HOST_" + namespace
+        mysql_db = "DB_NAME_" + namespace.replace("-", "_")
+        mysql_db = mysql_db.lower()
+        mysql_user = "DB_USER_" + namespace
+        mysql_container = "MYSQL_CONTAINER_" + namespace
+        mysql_repl_user = "REPL_DB_USER_" + namespace
+
+        #replication_user = "rep_" + namespace
+        repl_data['user'] = mysql_repl_user
+        repl_data['password'] = mysql_replication_password
+
+        pdns_container = "PDNS_CONTAINER_" + namespace
+        pdns_service = "PDNS_SERVICE_" + namespace
+        mysql_container_volume = "MYSQL_CONTAINER_VOLUME_" + namespace
+
+        network = "NETWORK_" + namespace
 
         customer = Customer(
-            mysql_host = "pdns_db",
-            mysql_db = "pdns_db_s"+ str(customer_id),
-            mysql_user = "pdns_user_s"+ str(customer_id),
+            mysql_host = mysql_host,
+            mysql_db = mysql_db,
+            mysql_user = mysql_user,
             mysql_password = mysql_password,
-            mysql_container =  "mysql_s" + str(customer_id),
+            mysql_container =  mysql_container,
             mysql_server_id =  customer_id,
-            mysql_repliation_user = replication_user,
+            mysql_repliation_user = mysql_repl_user,
             mysql_replication_password =  mysql_replication_password,
-            pdns_container = "pdns_s" + str(customer_id),
-            pdns_volume = "pdns_mysql_s" + str(customer_id),
+            pdns_container = pdns_container,
+            pdns_volume = mysql_container_volume,
             api_key = api_key,
             api_port = api_port,
             dns_port = dns_port,
             namespace = namespace,
-            network = "pdns_net_s" + str(customer_id),
+            network = network,
             enabled = True,
             stack = False
         )
@@ -488,12 +504,6 @@ def create_customer(orgId):
         env_read = er.read()
         er.close()
 
-        repl_data['user'] = replication_user
-        repl_data['password'] = mysql_replication_password
-        repl_data['id'] = customer_id
-
-        mysql_service_name = "pdns_db_s" + str(customer_id)
-
         env_replace_dict  = {
             #'GENERATED_PDNS_API_PORT': str(api_port),
             'GENERATED_PDNS_DNS_PORT': str(dns_port),
@@ -502,17 +512,17 @@ def create_customer(orgId):
             'PDNS_API_KEY_REPLACE': api_key,
             'CUSTOMER_UID_REPLACE': namespace,
             'SERVER_ID_REPLACE': str(customer_id),
-	        'MYSQL_DATABASE_REPLACE': "pdns_db_s" + str(customer_id),
-            'MYSQL_USER_REPLACE': "pdns_user_s" + str(customer_id),
-            'PDNS_CONTAINER_NAME_REPLACE': "pdns_s" + str(customer_id),
-            'MYSQL_CONTAINER_NAME_REPLACE': "mysql_s" + str(customer_id),
+	        'MYSQL_DATABASE_REPLACE': mysql_db,
+            'MYSQL_USER_REPLACE': mysql_user,
+            'PDNS_CONTAINER_NAME_REPLACE': pdns_container,
+            'MYSQL_CONTAINER_NAME_REPLACE': mysql_container,
             'NAMESPACE_REPLACE': namespace,
-            'PDNS_DB_VOLUME_REPLACE': "pdns_mysql_s" + str(customer_id),
-            'MDNSSEC_NET_NAME_REPLACE': "pdns_net_s" + str(customer_id),
-            'REPLICATION_USER_REPLACE': replication_user,
+            'PDNS_DB_VOLUME_REPLACE': mysql_container_volume,
+            'MDNSSEC_NET_NAME_REPLACE': network,
+            'REPLICATION_USER_REPLACE': mysql_repl_user,
             'MYSQL_ROOT_PASSWORD_REPLACE': mysql_root_password,
-            'MYSQL_SERVICE_NAME_REPLACE': mysql_service_name,
-            'PDNS_SERVICE_NAME_REPLACE': "pdns_s" + str(customer_id)
+            'MYSQL_SERVICE_NAME_REPLACE': mysql_host,
+            'PDNS_SERVICE_NAME_REPLACE': pdns_service
         }
 
         env_write = env_read.replace('GENERATED_PDNS_API_PORT',str(api_port))
@@ -529,21 +539,21 @@ def create_customer(orgId):
         compose_read = cr.read()
         cr.close()
 
-        repl_data['host'] = mysql_service_name
+        repl_data['host'] = mysql_host
 
         compose_replace_dict  = {
             #'MDSNSSEC_NET_NAME': "pdns_net_c" + str(customer_id),
             'PDNS_DNS_PORT_REPLACE': str(dns_port),
-            'MYSQL_CONTAINER_NAME': "mysql_s" + str(customer_id),
-            'PDNS_CONTAINER_NAME': "pdns_s" + str(customer_id),
-            'PDNS_DB_VOLUME_NAME': "pdns_mysql_s" + str(customer_id),
+            'MYSQL_CONTAINER_NAME': mysql_container,
+            'PDNS_CONTAINER_NAME': pdns_container,
+            'PDNS_DB_VOLUME_NAME': mysql_container_volume,
             'NAMESPACE': namespace,
             'PDNS_API_PORT_REPLACE': str(api_port),
-            'MYSQL_SERVICE_NAME': mysql_service_name,
-            'PDNS_SERVICE_NAME': "pdns_s" + str(customer_id)
+            'MYSQL_SERVICE_NAME': mysql_host,
+            'PDNS_SERVICE_NAME': pdns_service
         }
 
-        compose_write = compose_read.replace('MDSNSSEC_NET_NAME',"pdns_net_s" + str(customer_id))
+        compose_write = compose_read.replace('MDSNSSEC_NET_NAME', network)
 
         for key,val in compose_replace_dict.items():
             compose_write = compose_write.replace(key,val)
@@ -594,6 +604,9 @@ def configure_slave(channel, repl, port=3306):
     except Exception as err:
         raise err
 
+"""
+# Request from Amreesh to disable this one (20191001)
+
 # Force management database creation on slave, then start replication
 try:
     # Add Management database for slave replication
@@ -607,6 +620,7 @@ try:
     configure_slave(REPLICATION_CHANNEL, management_db, 3306)
 except Exception as err:
     raise err
+"""
 
 # Url prefix
 # https://stackoverflow.com/questions/18967441/add-a-prefix-to-all-flask-routes
