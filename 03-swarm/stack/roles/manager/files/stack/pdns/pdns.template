@@ -193,3 +193,6 @@ webserver-allow-from=0.0.0.0/0
 api=yes
 api-key=API_KEY
 
+# Set SOA-EDIT to INCEPTION-INCREMENT for signed zones
+default-soa-edit-signed=INCEPTION-INCREMENT
+default-soa-edit=INCEPTION-INCREMENT
