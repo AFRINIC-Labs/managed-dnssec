@@ -309,6 +309,14 @@
       #force_source: yes
       source: local
 
+  - name: Prepare api stack (push Nginx)
+    docker_image:
+      name: "{{ private_registry }}:{{ private_registry_port }}/{{ nginx_api }}:{{ nginx_api_tag }}"
+      repository: "{{ private_registry }}:{{ private_registry_port }}/{{ nginx_api }}:{{ nginx_api_tag }}"
+      push: yes
+      #force_source: yes
+      source: local
+
   - name: Deploy api stack
     docker_stack:
       state: present
