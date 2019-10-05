@@ -1,0 +1,24 @@
+server {
+    listen 80;
+    server_name default_server;
+    location / {
+        resolver 127.0.0.11;
+        #set $upstream_endpoint http://${FLASK_API}:${FLASK_API_PORT};
+        set $upstream_endpoint http://flask_api;
+        proxy_pass $upstream_endpoint:5000$request_uri;
+    }
+
+    location /nginx_status {
+        # Turn on nginx stats
+        stub_status on;
+
+        # I do not need logs for stats
+        access_log   off;
+
+        # Security: Only allow access from 127.0.0.1 IP #
+        allow 127.0.0.1;
+
+        # Send rest of the world to /dev/null #
+        deny all;
+   }
+}
