@@ -21,7 +21,7 @@ The `stack` folder is used by the `stack_api` to deploy AFRINIC member DNSSEC si
 
 
 ### Access ###
-* ~~Management API **http**: the API is listening on port `5005`~~Management API **http**: the API is listening on port `443`. The local registry is listening on port `5000`.
+* ~~Management API **http**: the API is listening on port `5005`~~ Management API **http**: the API is listening on port `443`. The local registry is listening on port `5000`.
 * Signer Stack API **http**: each member signer (PowerDNS) API will use a dedicated port starting `30000`.
 * **dns**: each member signer will use a dedicated port starting `8000`.
 
@@ -142,7 +142,7 @@ ansible-playbook stack.yml
 ```
 7. Test if docker client it running
 ```
-curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/docker
+curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fqdn>/api/v1/docker
 
 {
   "error": null,
@@ -153,7 +153,7 @@ curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqd
 ```
 8. Test `stack_api`
 ```
-curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack
+curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fqdn>/api/v1/stack
 
 {
   "error": null,
@@ -166,7 +166,7 @@ curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqd
 ```
 9. You can then, create a deployment for AFRINIC member
 ```
-curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack/deploy/ORG-AFNC1-AFRINIC
+curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fqdn>/api/v1/stack/deploy/ORG-AFNC1-AFRINIC
 
 {
   "error": null,
@@ -175,13 +175,13 @@ curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn
     "api_port": 30001,
     "dns_port": 8001,
     "stack": "ORG-AFNC1-AFRINIC_S1",
-    "url": "curl -v -H 'X-API-Key: Unjrbbji6howwDU' http://<swarm_manager_ip_or_fqdn>:30001/api/v1/servers/localhost"
+    "url": "curl -v -H 'X-API-Key: Unjrbbji6howwDU' https://<swarm_manager_ip_or_fqdn>:30001/api/v1/servers/localhost"
   },
   "status": "OK"
 }
 
 
-curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack/deploy/ORG-AFNC1-AFRINIC
+curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fqdn>/api/v1/stack/deploy/ORG-AFNC1-AFRINIC
 
 {
   "error": "Existing",
@@ -192,7 +192,7 @@ curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn
 ```
 10. List of stack deployed in the swarm
 ```
-curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack
+curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fqdn>/api/v1/stack
 
 {
   "error": null,
@@ -208,7 +208,7 @@ We have the default `stack_api` with ~~`3`~~`4` services (MySQL master, MySQL sl
 
 11. Get information on a AFRINIC member stack using the stack name
 ```
-curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack/info/ORG-AFNC1-AFRINIC_S1
+curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fqdn>/api/v1/stack/info/ORG-AFNC1-AFRINIC_S1
 
 {
   "error": null,
@@ -240,7 +240,7 @@ curl -s -k -L -H 'X-API-Key: Unjrbbji6howwDU' http://<swarm_manager_ip_or_fqdn>:
 ```
 13. Remove a stack from the swarm
 ```
-curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack/remove/ORG-AFNC1-AFRINIC_S1
+curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fqdn>/api/v1/stack/remove/ORG-AFNC1-AFRINIC_S1
 
 {
   "error": null,
@@ -248,7 +248,7 @@ curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn
   "status": "OK"
 }
 
-curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack/remove/ORG-AFNC1-AFRINIC_S1
+curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fqdn>/api/v1/stack/remove/ORG-AFNC1-AFRINIC_S1
 
 {
   "error": "NoStack",
