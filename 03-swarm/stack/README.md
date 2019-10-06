@@ -21,9 +21,10 @@ The `stack` folder is used by the `stack_api` to deploy AFRINIC member DNSSEC si
 
 
 ### Access ###
-* Management API **http**: the API is listening on port `5005`. The local registry is listening on port `5000`.
+* ~~Management API **http**: the API is listening on port `5005`~~Management API **http**: the API is listening on port `443`. The local registry is listening on port `5000`.
 * Signer Stack API **http**: each member signer (PowerDNS) API will use a dedicated port starting `30000`.
 * **dns**: each member signer will use a dedicated port starting `8000`.
+
 
 | Action                             | HTTP Verb           | Parameters            | Required authentication | Url                                   | Result                                   | 
 |------------------------------------|:-------------------:|-----------------------|-------------------------|---------------------------------------|------------------------------------------|
@@ -34,7 +35,7 @@ The `stack` folder is used by the `stack_api` to deploy AFRINIC member DNSSEC si
 | Get metadata on a member stack     | ``POST``            | Member Stack Name     | X-Auth-Token: TOKEN     | /stack/info/{member_stack_id}         | Member Stack metadata                    |
 | Remove member stack                | ``POST``            | Member Stack Name     | X-Auth-Token: TOKEN     | /stack/remove/{member_stack_id}       |  Removed **Member Stack Name**           |
 
-All paths are relative to ``http://<swarm_manager_ip_or_fqdn>:5005/api/v1``.
+All paths are relative to ~~``http://<swarm_manager_ip_or_fqdn>:5005/api/v1``~~``http://<swarm_manager_ip_or_fqdn>/api/v1``.
 ### Mini documentation ###
 1. Add vault password in file
 ```
@@ -90,6 +91,7 @@ API_BASE=/api/v1
 TOKEN=<random_string>
 
 APP_ENV=Prod
+WORKER_NODE=<swarm_manager_ip_or_fqdn>
 ```
 Variables starting by **MYSQL_** are related to MySQL master instance. Note that MySQL port `3306` is not open to external.
 
@@ -113,6 +115,8 @@ The API base url is dedinied in **API_BASE**. This base url can be changed which
 **TOKEN** is the HTTP authentication header to protect access to the `stack_api`.
 
 **APP_ENV** is related to Flask deployment mode.
+
+**WORKER_NODE** is used to set PDNS host.
 
 5. Update environment variables in management for MySQL replication
 ```
@@ -138,7 +142,7 @@ ansible-playbook stack.yml
 ```
 7. Test if docker client it running
 ```
-curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/docker | jq .
+curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/docker
 
 {
   "error": null,
@@ -149,7 +153,7 @@ curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/ap
 ```
 8. Test `stack_api`
 ```
-curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack | jq .
+curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack
 
 {
   "error": null,
@@ -162,7 +166,7 @@ curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/ap
 ```
 9. You can then, create a deployment for AFRINIC member
 ```
-curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/deploy/ORG-AFNC1-AFRINIC | jq .
+curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack/deploy/ORG-AFNC1-AFRINIC
 
 {
   "error": null,
@@ -171,13 +175,13 @@ curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/ap
     "api_port": 30001,
     "dns_port": 8001,
     "stack": "ORG-AFNC1-AFRINIC_S1",
-    "url": "curl -v -H 'X-API-Key: Unjrbbji6howwDU' http://HOST:30001/api/v1/servers/localhost"
+    "url": "curl -v -H 'X-API-Key: Unjrbbji6howwDU' http://<swarm_manager_ip_or_fqdn>:30001/api/v1/servers/localhost"
   },
   "status": "OK"
 }
 
 
-curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/deploy/ORG-AFNC1-AFRINIC | jq .
+curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack/deploy/ORG-AFNC1-AFRINIC
 
 {
   "error": "Existing",
@@ -188,7 +192,7 @@ curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/ap
 ```
 10. List of stack deployed in the swarm
 ```
-curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack | jq .
+curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack
 
 {
   "error": null,
@@ -200,11 +204,11 @@ curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/ap
 }
 
 ```
-We have the default `stack_api` with `3` services (MySQL master, MySQL slave and Flask API) and the new deployed customer stack `ORG-AFNC1-AFRINIC_S1` with `2` services (MySQL master and PowerDNS).
+We have the default `stack_api` with ~~`3`~~`4` services (MySQL master, MySQL slave ~~and~~, Flask API, Nginx Reverse proxy) and the new deployed customer stack `ORG-AFNC1-AFRINIC_S1` with `2` services (MySQL master and PowerDNS).
 
 11. Get information on a AFRINIC member stack using the stack name
 ```
-curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/info/ORG-AFNC1-AFRINIC_S1 | jq .
+curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack/info/ORG-AFNC1-AFRINIC_S1
 
 {
   "error": null,
@@ -213,7 +217,7 @@ curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/ap
     "api_port": 30001,
     "dns_port": 8001,
     "stack": "ORG-AFNC1-AFRINIC_S1",
-    "url": "curl -v -H 'X-API-Key: Unjrbbji6howwDU' http://HOST:30001/api/v1/servers/localhost"
+    "url": "curl -v -H 'X-API-Key: Unjrbbji6howwDU' http://<swarm_manager_ip_or_fqdn>:30001/api/v1/servers/localhost"
   },
   "status": "OK"
 }
@@ -221,7 +225,7 @@ curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/ap
 ```
 12. Check if PowerDNS API is running
 ```
-curl -H 'X-API-Key: Unjrbbji6howwDU' http://<swarm_manager_ip_or_fqdn>:30001/api/v1/servers/localhost | jq .
+curl -s -k -L -H 'X-API-Key: Unjrbbji6howwDU' http://<swarm_manager_ip_or_fqdn>:30001/api/v1/servers/localhost
 
 {
   "config_url": "/api/v1/servers/localhost/config{/config_setting}",
@@ -236,7 +240,7 @@ curl -H 'X-API-Key: Unjrbbji6howwDU' http://<swarm_manager_ip_or_fqdn>:30001/api
 ```
 13. Remove a stack from the swarm
 ```
-curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/remove/ORG-AFNC1-AFRINIC_S1 | jq .
+curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack/remove/ORG-AFNC1-AFRINIC_S1
 
 {
   "error": null,
@@ -244,7 +248,7 @@ curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/ap
   "status": "OK"
 }
 
-curl -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>:5005/api/v1/stack/remove/ORG-AFNC1-AFRINIC_S1 | jq .
+curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  http://<swarm_manager_ip_or_fqdn>/api/v1/stack/remove/ORG-AFNC1-AFRINIC_S1
 
 {
   "error": "NoStack",
