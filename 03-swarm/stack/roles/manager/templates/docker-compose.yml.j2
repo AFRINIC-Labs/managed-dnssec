@@ -82,8 +82,10 @@ services:
       context: flask
     hostname: stack_api
     container_name: stack_api
-    ports:
-      - "{{ signer_api_port }}:5000"
+    expose:
+      - 5000
+    #ports:
+    #  - "{{ signer_api_port }}:5000"
     networks:
       - stack_api_db_net
       - {{ replication_net }}
