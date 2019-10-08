@@ -21,7 +21,7 @@ The `stack` folder is used by the `stack_api` to deploy AFRINIC member DNSSEC si
 
 
 ### Access ###
-* ~~Management API **http**: the API is listening on port `5005`~~ Management API **http**: the API is listening on port `443`. The local registry is listening on port `5000`.
+* Management API **http**: the API is listening on port ~~`5005`~~  `443`. The local registry is listening on port `5000`.
 * Signer Stack API **http**: each member signer (PowerDNS) API will use a dedicated port starting `30000`.
 * **dns**: each member signer will use a dedicated port starting `8000`.
 

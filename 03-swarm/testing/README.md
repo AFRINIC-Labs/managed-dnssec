@@ -185,7 +185,7 @@ f2ac46c35b8a        project_dns_api             "python -u ./app.py"     49 seco
 e07e9a285309        project_nsd_authoritative   "run.sh"                 About a minute ago   Up About a minute (healthy)   0.0.0.0:53->53/tcp, 0.0.0.0:53->53/udp     nsd_in
 
 ```
-9. Run python script on external app
+9. 0 - Run python script on external app
 This script process as follow:
 
 * Create slave mode TSIG keys.
@@ -252,6 +252,112 @@ bind.tld. IN DS 23277 10 4 e83783e3d8fe1e84212c57af3e195722b53c5b7259c67cdd65a45
 
 
 ```
+9. 1 - Use json file to read zone data
+Create a `json` file following this format
+```
+vim project/dnspython/app/data.json
+
+[
+    {
+        "zone": "unbound.tld",
+        "ns": "172.16.1.1",
+        "tsigkeys": [
+            {
+                "out": {
+                "name": "unbound_slave",
+                "algo": "hmac-sha256",
+                "secret": "super_secret_out"
+                }
+            },
+            {
+                "in": {
+                "name": "unbound_master.",
+                "algo": "hmac-sha256",
+                "secret": "super_secret_in"
+                }
+            }
+        ],
+        "cryptokeys": [
+            {
+                "ksk": {
+                "active": true,
+                "bits": 2048,
+                "algorithm": "rsasha512"
+                }
+            },
+            {
+                "zsk": {
+                "active": true,
+                "bits": 2048,
+                "algorithm": "rsasha256"
+                }
+            }
+        ]
+    },
+    {
+        "zone": "tata.tld",
+        "ns": "192.168.11.53",
+        "tsigkeys": [
+            {
+                "out": {
+                "name": "toto",
+                "algo": "hmac",
+                "secret": "badddd"
+                }
+            },
+            {
+                "in": {
+                "name": "toto",
+                "algo": "hmac",
+                "secret": "badddd"
+                }
+            }
+        ],
+        "cryptokeys": [
+            {
+                "ksk": {
+                "active": true,
+                "bits": 2048,
+                "algorithm": "rsasha512"
+                }
+            },
+            {
+                "zsk": {
+                "active": true,
+                "bits": 1024,
+                "algorithm": "rsasha512"
+                }
+            }
+        ]
+    }
+]
+
+```
+---
+**NOTE**
+* TSIG keys `out`: from member DNS server to signer.
+* TSIG keys `in`: from signer to member DNS server.
+* `KSK` algorithm is use for both `KSK` and `ZSK`.
+* `KSK` key size (bits) is enforced to be higher than `ZSK` one.
+* `NSEC3` is set as default.
+---
+
+9. 2 - Run python script using the json file as parameter
+```
+python dns_test.py -f data.json
+Creating Tsig keys...
+TSIG Out: from Member DNS server to signer
+TSIG In: from Signer to member DNS server
+Creating slave zone unbound.tld
+Checking AXFR for zone unbound.tld.
+Setting zone unbound.tld to master
+Creating DNSSEC Cryptokeys
+Setting NSEC3 params for zone unbound.tld
+Getting DS for zone unbound.tld
+['18558 10 1 939ef6c092f21eb79955a16f60591623782c6532', '18558 10 2 27ed3e222291ba1fd90b84693307b28922a97514638e6ec142c902add9733e7e', '18558 10 4 9f00179996eb7134eb7cc8d7e3c359af7021eb3ed188e24d29644cb3b0278146782575303afe6b59ee8cdc916da02717']
+```
+
+
 10. Test if zone transfer is working (from customer primary to AFRINIC signer)
 ```
 dig @<afrinic_dns_ip> -p <afrinic_dns_port> pdns.tld soa +short
