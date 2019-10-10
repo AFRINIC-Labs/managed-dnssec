@@ -356,7 +356,10 @@ Setting NSEC3 params for zone unbound.tld
 Getting DS for zone unbound.tld
 ['18558 10 1 939ef6c092f21eb79955a16f60591623782c6532', '18558 10 2 27ed3e222291ba1fd90b84693307b28922a97514638e6ec142c902add9733e7e', '18558 10 4 9f00179996eb7134eb7cc8d7e3c359af7021eb3ed188e24d29644cb3b0278146782575303afe6b59ee8cdc916da02717']
 ```
-
+9. 3 - Run python script using the json data directly
+```
+python dns_test.py -d '[{"zone": "toto.tld", "ns": "192.168.11.53","tsikeys": [{"out": {"name": "toto","algo": "hmac","secret": "badddd"}},{"in": {"name": "toto","algo": "hmac","secret": "badddd"}}],"cryptokeys": [{"ksk": {"active": true, "bits": 2048,"algorithm": "rsasha512"}},{"zsk": {"active": true, "bits": 1024,"algorithm": "rsasha512"}}]}]'
+```
 
 10. Test if zone transfer is working (from customer primary to AFRINIC signer)
 ```
@@ -372,15 +375,14 @@ ns1.nsd.tld. hostmaster.nsd.tld. 2019090501 7200 3600 604800 43200
 
 11. Get nsd.tld zone
 ```
-dig @<afrinic_dns_ip> -p <afrinic_dns_port> nsd.tld any
+dig @<afrinic_dns_ip> -p <afrinic_dns_port> nsd.tld any +norecur
 
-; <<>> DiG 9.14.4 <<>> @<afrinic_dns_ip> -p <afrinic_dns_port> nsd.tld any
+; <<>> DiG 9.14.4 <<>> @<afrinic_dns_ip> -p <afrinic_dns_port> nsd.tld any +norecur
 ; (2 servers found)
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 44083
 ;; flags: qr aa rd; QUERY: 1, ANSWER: 6, AUTHORITY: 0, ADDITIONAL: 4
-;; WARNING: recursion requested but not available
 
 ;; OPT PSEUDOSECTION:
 ; EDNS: version: 0, flags:; udp: 1232
@@ -767,15 +769,14 @@ According to this [bug report](https://github.com/PowerDNS/pdns/issues/5330), "i
 
 17. Check if signed zone is available on customer DNS server using TSIG
 ```
-dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port> nsd.tld dnskey +multiline
+dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port> nsd.tld dnskey +multiline +norecur
 
-; <<>> DiG 9.14.4 <<>> @<member_secondary_dns_ip> -p <member_secondary_dns_port> nsd.tld dnskey +multiline
+; <<>> DiG 9.14.4 <<>> @<member_secondary_dns_ip> -p <member_secondary_dns_port> nsd.tld dnskey +multiline +norecur
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 29030
 ;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
-;; WARNING: recursion requested but not available
 
 ;; OPT PSEUDOSECTION:
 ; EDNS: version: 0, flags:; udp: 4096
@@ -808,15 +809,14 @@ nsd.tld.		43200 IN DNSKEY	257 3 10 (
 ```
 18. Full signed zone from customer DNS server
 ```
-dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port> nsd.tld +dnssec +multiline any
+dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port> nsd.tld +dnssec +multiline any +norecur
 
-; <<>> DiG 9.14.4 <<>> @<member_secondary_dns_ip> -p <member_secondary_dns_port> nsd.tld +dnssec +multiline any
+; <<>> DiG 9.14.4 <<>> @<member_secondary_dns_ip> -p <member_secondary_dns_port> nsd.tld +dnssec +multiline any +norecur
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 50837
 ;; flags: qr aa rd; QUERY: 1, ANSWER: 16, AUTHORITY: 0, ADDITIONAL: 4
-;; WARNING: recursion requested but not available
 
 ;; OPT PSEUDOSECTION:
 ; EDNS: version: 0, flags: do; udp: 4096
@@ -984,15 +984,14 @@ According to PowerDNS doc on [Signatures](https://doc.powerdns.com/authoritative
 But as of today (Wednesday September 18, 2019), on the member DNS server, the RRSIG will expire on `20190919000000` ie the old RRSIG is still used.
 
 ```
-dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port>  nsd.tld soa  +dnssec +multiline
+dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port>  nsd.tld soa  +dnssec +multiline +norecur
 
-; <<>> DiG 9.14.4 <<>> @<member_secondary_dns_ip> -p <member_secondary_dns_port> nsd.tld soa +dnssec +multiline
+; <<>> DiG 9.14.4 <<>> @<member_secondary_dns_ip> -p <member_secondary_dns_port> nsd.tld soa +dnssec +multiline +norecur
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 51214
 ;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
-;; WARNING: recursion requested but not available
 
 ;; OPT PSEUDOSECTION:
 ; EDNS: version: 0, flags: do; udp: 4096
@@ -1029,15 +1028,14 @@ On the signer, we get expected response.
 
 
 ```
-dig  @<afrinic_dns_ip> -p <afrinic_dns_port>  nsd.tld soa  +dnssec +multiline
+dig  @<afrinic_dns_ip> -p <afrinic_dns_port>  nsd.tld soa  +dnssec +multiline +norecur
 
-; <<>> DiG 9.14.4 <<>> @<afrinic_dns_ip> -p <afrinic_dns_port> nsd.tld soa +dnssec +multiline
+; <<>> DiG 9.14.4 <<>> @<afrinic_dns_ip> -p <afrinic_dns_port> nsd.tld soa +dnssec +multiline +norecur
 ; (2 servers found)
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 58118
 ;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
-;; WARNING: recursion requested but not available
 
 ;; OPT PSEUDOSECTION:
 ; EDNS: version: 0, flags: do; udp: 1232
@@ -1100,15 +1098,14 @@ curl -s -H 'X-API-Key: <afrinic_api_key>' -X POST -d '{"kind": "SOA-EDIT", "meta
 We can notice a change on the zone serial to `2019091201` (old was `2019090801`) on the signer side.
 
 ```
-dig  @<afrinic_dns_ip>  -p <afrinic_dns_port>  nsd.tld soa  +dnssec +multiline
+dig  @<afrinic_dns_ip>  -p <afrinic_dns_port>  nsd.tld soa  +dnssec +multiline +norecur
 
-; <<>> DiG 9.14.4 <<>> @<afrinic_dns_ip> -p <afrinic_dns_port> nsd.tld soa +dnssec +multiline
+; <<>> DiG 9.14.4 <<>> @<afrinic_dns_ip> -p <afrinic_dns_port> nsd.tld soa +dnssec +multiline +norecur
 ; (2 servers found)
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 27255
 ;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
-;; WARNING: recursion requested but not available
 
 ;; OPT PSEUDOSECTION:
 ; EDNS: version: 0, flags: do; udp: 1232
@@ -1140,15 +1137,14 @@ nsd.tld.		43200 IN SOA ns1.nsd.tld. hostmaster.nsd.tld. (
 On the member DNS server (zone refresh request may be necessary), we have for the same zone new RRSIGs with new SOA.
 
 ```
-dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port>  nsd.tld soa  +dnssec +multiline
+dig  @<member_secondary_dns_ip>  -p <member_secondary_dns_port>  nsd.tld soa  +dnssec +multiline +norecur
 
-; <<>> DiG 9.14.4 <<>> @<member_secondary_dns_ip> -p <member_secondary_dns_port> nsd.tld soa +dnssec +multiline
+; <<>> DiG 9.14.4 <<>> @<member_secondary_dns_ip> -p <member_secondary_dns_port> nsd.tld soa +dnssec +multiline +norecur
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 41101
 ;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
-;; WARNING: recursion requested but not available
 
 ;; OPT PSEUDOSECTION:
 ; EDNS: version: 0, flags: do; udp: 4096
