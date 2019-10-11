@@ -162,18 +162,19 @@ def set_master(zone, tsigkey):
         # Check if zone is Master
         data = fetch_json(urljoin(API_URL,API_VERSION) + '/zones/{0}'.format(zone), headers=headers, method='GET')
         if 'error' in data:
-            return {'status': 'error', 'msg': 'Could not check if zone '+zone+' is Master'}
+            return {'status': 'error', 'msg': 'Could not check if zone '+zone+' is Slave'}
         else:
-            if data['kind'] != 'Master':
-                # Set Zone to Master
+            if data['kind'] != 'Slave':
+            #if data['kind'] != 'Master':
+                # Set Zone to Master => No need
                 post_data = {
-                    "kind": "Master",
+                    "kind": "Slave",
                     "master_tsig_key_ids": [tsigkey],
                     "api_rectify": True
                 }
                 data = fetch_json(urljoin(API_URL,API_VERSION) + '/zones/{0}'.format(zone), headers=headers, method='PUT', data=post_data)
                 if 'error' in data:
-                    return {'status': 'error', 'msg': 'Zone '+zone+' could not be change to Master', 'data': data}
+                    return {'status': 'error', 'msg': 'Zone '+zone+' could not be change to Slave', 'data': data}
                 else:
                     # Set SOA
                     post_data = {
