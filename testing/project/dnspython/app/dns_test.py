@@ -162,19 +162,18 @@ def set_master(zone, tsigkey):
         # Check if zone is Master
         data = fetch_json(urljoin(API_URL,API_VERSION) + '/zones/{0}'.format(zone), headers=headers, method='GET')
         if 'error' in data:
-            return {'status': 'error', 'msg': 'Could not check if zone '+zone+' is Slave'}
+            return {'status': 'error', 'msg': 'Could not check if zone '+zone+' is Master'}
         else:
-            if data['kind'] != 'Slave':
-            #if data['kind'] != 'Master':
-                # Set Zone to Master => No need
+            if data['kind'] != 'Master':
+                # Set Zone to Master
                 post_data = {
-                    "kind": "Slave",
+                    "kind": "Master",
                     "master_tsig_key_ids": [tsigkey],
                     "api_rectify": True
                 }
                 data = fetch_json(urljoin(API_URL,API_VERSION) + '/zones/{0}'.format(zone), headers=headers, method='PUT', data=post_data)
                 if 'error' in data:
-                    return {'status': 'error', 'msg': 'Zone '+zone+' could not be change to Slave', 'data': data}
+                    return {'status': 'error', 'msg': 'Zone '+zone+' could not be change to Master', 'data': data}
                 else:
                     # Set SOA
                     post_data = {
@@ -185,11 +184,21 @@ def set_master(zone, tsigkey):
                     if 'error' in data:
                         return {'status': 'error', 'msg': 'Cannot set  soa for zone '+ zone +'. Error: {0}'.format(data['error']), 'data': data}
                     else:
-                        return {'status': 'ok', 'data': str(data)}
+                        # Set back to slave to get updates from member DNS server
+                        post_data = {
+                            "kind": "Slave"
+                        }
+                        data = fetch_json(urljoin(API_URL,API_VERSION)  + '/zones/{0}'.format(zone), headers=headers, method='PUT', data=post_data)
+                        if 'error' in data:
+                            return {'status': 'error', 'msg': 'Cannot set  zone '+ zone +' to slave. Error: {0}'.format(data['error']), 'data': data}
+                        else:
+                            return {'status': 'ok', 'data': str(data)}
+                        #return {'status': 'ok', 'data': str(data)}
             else:
                 return {'status': 'ok', 'data': data}
     except Exception as e:
         return {'status': 'error', 'msg': str(e) }
+
 
 def create_cryptokeys(zone, keytype, algorithm, active, bit):
     try:
