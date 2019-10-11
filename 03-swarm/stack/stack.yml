@@ -1,6 +1,0 @@
----
-- name: Install docker and deploy swarm cuslter
-  hosts: all
-  gather_facts: true
-  roles:
-    - role: manager
