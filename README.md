@@ -12,7 +12,7 @@ A container-based hosted DNSSEC service.
 * **DNSSEC signing  using Docker Swarm** (Staging).
 
 ### Docker Swarm ###
-This is the selected choice. We use PowerDNS 4.2.x (require to manipulate TSIGKeys). More details [here](03-swarm/stack). For testing, we have deployed authoritative DNS servers (NSD, Bind) as master to the signer (PowerDNS) and Knot as slave for the signer (PowerDNS). More details [here](03-swarm/testing).
+This is the selected choice. We use PowerDNS 4.2.x (require to manipulate TSIGKeys). More details [here](stack). For testing, we have deployed authoritative DNS servers (NSD, Bind) as master to the signer (PowerDNS) and Knot as slave for the signer (PowerDNS). More details [here](testing).
 
 ### Other implementations ###
 
