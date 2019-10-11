@@ -18,9 +18,9 @@ This is the selected choice. We use PowerDNS 4.2.x (require to manipulate TSIGKe
 
 #### Docker Compose PoC ####
 Three implementations have been tested:
-* `PowerDNS` as signer with other authoritative DNS servers (bind, nsd). `dnspython` is used to retrieved signed zone. More details [here](01-compose/01-PoC-PowerDNS).
+* `PowerDNS` as signer with other authoritative DNS servers (bind, nsd). `dnspython` is used to retrieved signed zone. More details [here](https://github.com/AFRINIC-Labs/managed-dnssec/tree/compose/01-PoC-PowerDNS).
 * `OpenDNSSEC` as signer (using DNS adapter) with other authoritative DNS servers (bind, nsd, pdns). `knot` is used to retrieved signed zone. See next implementation.
-* Same as previous one with MySQL backend for OpenDNSSEC Enforcer. More details [here](01-compose/02-PoC-OpenDNSSEC).
+* Same as previous one with MySQL backend for OpenDNSSEC Enforcer. More details [here](https://github.com/AFRINIC-Labs/managed-dnssec/tree/compose/02-PoC-OpenDNSSEC).
 
 #### Kubernetes PoC ####
 Two implementations have been tested:
