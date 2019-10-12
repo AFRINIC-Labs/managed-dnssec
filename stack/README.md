@@ -16,8 +16,8 @@ With an Ansible playbook [`stack.yml`](stack.yml) that use a custom role [manage
 * Build and push images on the local registry.
 * Deploy the stack.
 
-The `management` folder will deploy a base docker stack (`stack_api`): MySQL servers (master and slave) and Flask API. This stack will offer an API that will be use by external application to create AFRINIC member DNSSEC signer stack.
-The `stack` folder is used by the `stack_api` to deploy AFRINIC member DNSSEC signer stack: MySQL server and PowerDNS.
+The `management` folder will deploy a base docker stack (`STACK_API`): MySQL servers (master and slave), Flask API and NGINX reverse proxy. This stack will offer an API that will be use by external application to create AFRINIC member DNSSEC signer stack.
+The `stack` folder is used by the `STACK_API` to deploy AFRINIC member DNSSEC signer stack: MySQL server and PowerDNS.
 
 
 ### Access ###
@@ -26,16 +26,16 @@ The `stack` folder is used by the `stack_api` to deploy AFRINIC member DNSSEC si
 * **dns**: each member signer will use a dedicated port starting `8000`.
 
 
-| Action                             | HTTP Verb           | Parameters            | Required authentication | Url                                   | Result                                   | 
-|------------------------------------|:-------------------:|-----------------------|-------------------------|---------------------------------------|------------------------------------------|
-| General info                       | ``GET``             | None                  | X-Auth-Token: TOKEN     | /info                                 | Container network information            |
-| Check if docker dameon is running  | ``GET`` or ``POST`` | None                  | X-Auth-Token: TOKEN     | /docker                               | Docker client status                     |
-| List all members in the stack      | ``POST``            | None                  | X-Auth-Token: TOKEN     | /stack                                | Array of **Member Stack Name**           |
-| Deploy new stack (for a member)    | ``POST``            | Member AFRINIC Org ID | X-Auth-Token: TOKEN     | /stack/deploy/{member_afrinic_org_id} | New **Member Stack Name** with metadata  |
-| Get metadata on a member stack     | ``POST``            | Member Stack Name     | X-Auth-Token: TOKEN     | /stack/info/{member_stack_id}         | Member Stack metadata                    |
-| Remove member stack                | ``POST``            | Member Stack Name     | X-Auth-Token: TOKEN     | /stack/remove/{member_stack_id}       |  Removed **Member Stack Name**           |
+| Action                             | HTTP Verb           | Parameters            | Required authentication | Url                                     | Result                                   | 
+|------------------------------------|:-------------------:|-----------------------|-------------------------|-----------------------------------------|------------------------------------------|
+| General info                       | ``GET``             | None                  | X-Auth-Token: TOKEN     | /info                                   | Container network information            |
+| Check if docker dameon is running  | ``GET`` or ``POST`` | None                  | X-Auth-Token: TOKEN     | /docker                                 | Docker client status                     |
+| List all members in the stack      | ``POST``            | None                  | X-Auth-Token: TOKEN     | /stack                                  | Array of **Member Stack Name**           |
+| Deploy new stack (for a member)    | ``POST``            | Member AFRINIC Org ID | X-Auth-Token: TOKEN     | /stack/deploy/{member_afrinic_org_id}   | New **Member Stack Name** with metadata  |
+| Get metadata on a member stack     | ``POST``            | Member Stack Name     | X-Auth-Token: TOKEN     | /stack/info/{member_stack_name}         | Member Stack metadata                    |
+| Remove member stack                | ``POST``            | Member Stack Name     | X-Auth-Token: TOKEN     | /stack/remove/{member_stack_name}       |  Removed **Member Stack Name**           |
 
-All paths are relative to ~~``http://<swarm_manager_ip_or_fqdn>:5005/api/v1``~~``http://<swarm_manager_ip_or_fqdn>/api/v1``.
+All paths are relative to ~~``http://<swarm_manager_ip_or_fqdn>:5005/api/v1``~~``https://<swarm_manager_ip_or_fqdn>/api/v1``.
 ### Mini documentation ###
 1. Add vault password in file
 ```
@@ -61,7 +61,7 @@ vault_password_file = ./.vault_pass.txt
 ...
 ```
 4. Update environment variables in `management` folder
-Those variables are use by the `stack_api` while deploying two MySQL server (master and slave) and a Flask API.
+Those variables are use by the `STACK_API` while deploying two MySQL server (master and slave) and a Flask API.
 ```
 vim roles/manager/files/management/.env
 
@@ -158,7 +158,7 @@ curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fq
 {
   "error": null,
   "output": [
-    "stack_api:3"
+    "STACK_API:4"
   ],
   "status": "OK"
 }
@@ -198,13 +198,13 @@ curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fqd
   "error": null,
   "output": [
     "ORG-AFNC1-AFRINIC_S1:2",
-    "stack_api:3"
+    "STACK_API:4"
   ],
   "status": "OK"
 }
 
 ```
-We have the default `stack_api` with ~~`3`~~`4` services (MySQL master, MySQL slave ~~and~~, Flask API, Nginx Reverse proxy) and the new deployed customer stack `ORG-AFNC1-AFRINIC_S1` with `2` services (MySQL master and PowerDNS).
+We have the default `STACK_API` with `4` services (MySQL master, MySQL slave, Flask API, Nginx Reverse proxy) and the new deployed customer stack `ORG-AFNC1-AFRINIC_S1` with `2` services (MySQL master and PowerDNS).
 
 11. Get information on a AFRINIC member stack using the stack name
 ```
