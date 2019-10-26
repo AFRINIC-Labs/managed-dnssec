@@ -82,3 +82,5 @@ pdns_common_resources:
   reservations:
     cpus: '0.1'
     memory: 128M
+
+tls_common_name: mdnssec.ri.mu.afrinic.net

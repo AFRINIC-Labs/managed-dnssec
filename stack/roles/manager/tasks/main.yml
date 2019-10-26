@@ -226,6 +226,36 @@
       group: "{{ ansible_ssh_user }}"
       mode: u=rw,g=r,o=r
 
+  - name: Install openssl-certificate requirements
+    become: true
+    pip:
+      name:
+        - pyOpenSSL
+
+  - name: Generate 2048 bits DH Parameters
+    openssl_dhparam:
+      path: "{{ remote_dst_path }}/management/nginx/dhparam.pem"
+      size: 2048
+
+  - name: Generate an OpenSSL RSA 2048 bits private key (default is 4096 bits)
+    openssl_privatekey:
+      path: "{{ remote_dst_path }}/management/nginx/nginx.key"
+      size: 2048
+
+  - name: Generate an OpenSSL Certificate Signing Request
+    openssl_csr:
+      path: "{{ remote_dst_path }}/management/nginx/nginx.csr"
+      privatekey_path: "{{ remote_dst_path }}/management/nginx/nginx.key"
+      common_name: "{{ tls_common_name }}"
+
+  - name: Generate a Self Signed OpenSSL certificate
+    openssl_certificate:
+      path: "{{ remote_dst_path }}/management/nginx/nginx.crt"
+      privatekey_path: "{{ remote_dst_path }}/management/nginx/nginx.key"
+      csr_path: "{{ remote_dst_path }}/management/nginx/nginx.csr"
+      selfsigned_not_after: "+365d"
+      provider: selfsigned
+
   - name: Copy stack folder
     copy:
       src: files/stack
