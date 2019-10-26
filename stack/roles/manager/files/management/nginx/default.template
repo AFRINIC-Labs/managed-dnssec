@@ -10,6 +10,9 @@ server {
         log_not_found off;
     }
 
+    error_log  /var/log/nginx/proxy_error.log;
+    access_log  /var/log/nginx/proxy_access.log;
+
     location /nginx_status {
         # Turn on nginx stats
         stub_status on;
@@ -32,8 +35,10 @@ server {
 server {
 
     server_name default_server;
-    listen 443 ssl http2;
-    #listen [::]:443 ssl http2;
+    listen  443 ssl;
+
+    error_log  /var/log/nginx/proxy_error.log;
+    access_log  /var/log/nginx/proxy_access.log;
 
     #ssl on;
     ssl_certificate /etc/nginx/ssl/nginx.crt;
@@ -45,55 +50,28 @@ server {
     ssl_prefer_server_ciphers on;
     ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
 
-    # https://gist.github.com/plentz/6737338
-
-    # enable session resumption to improve https performance
-    # http://vincent.bernat.im/en/blog/2011-ssl-session-reuse-rfc5077.html
-    ssl_session_cache shared:SSL:50m;
-    ssl_session_timeout 1d;
-    ssl_session_tickets off;
-
-    # don't send the nginx version number in error pages and Server header
-    server_tokens off;
-
     add_header "Strict-Transport-Security" "max-age=31536000";
     add_header Pragma public;
     add_header Cache-Control "public, must-revalidate, proxy-revalidate";
     add_header Expires "-1";
     add_header X-Frame-Options "DENY";
-    # This header enables the Cross-site scripting (XSS) filter built into most recent web browsers.
-    # It's usually enabled by default anyway, so the role of this header is to re-enable the filter for 
-    # this particular website if it was disabled by the user.
-    # https://www.owasp.org/index.php/List_of_useful_HTTP_headers
     add_header X-XSS-Protection "1; mode=block";
-    # when serving user-supplied content, include a X-Content-Type-Options: nosniff header along with the Content-Type: header,
-    # to disable content-type sniffing on some browsers.
-    # https://www.owasp.org/index.php/List_of_useful_HTTP_headers
-    # currently suppoorted in IE > 8 http://blogs.msdn.com/b/ie/archive/2008/09/02/ie8-security-part-vi-beta-2-update.aspx
-    # http://msdn.microsoft.com/en-us/library/ie/gg622941(v=vs.85).aspx
-    # 'soon' on Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=471020
-    add_header X-Content-Type-Options nosniff;
+    add_header X-Content-Type-Options "nosniff";
     add_header X-Download-Options "noopen";
     add_header X-Permitted-Cross-Domain-Policies "none";
-    # with Content Security Policy (CSP) enabled(and a browser that supports it(http://caniuse.com/#feat=contentsecuritypolicy),
-    # you can tell the browser that it can only download content from the domains you explicitly allow
-    # http://www.html5rocks.com/en/tutorials/security/content-security-policy/
-    # https://www.owasp.org/index.php/Content_Security_Policy
-    # I need to change our application code so we can increase security by disabling 'unsafe-inline' 'unsafe-eval'
-    # directives for css and js(if you have inline css or js, you will need to keep it too).
-    # more: http://www.html5rocks.com/en/tutorials/security/content-security-policy/#inline-code-considered-harmful
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-src; object-src 'none'";
-    #add_header Content-Security-Policy "default-src https: 'unsafe-eval' 'unsafe-inline'; object-src 'none'";
+    add_header Content-Security-Policy "default-src https: 'unsafe-eval' 'unsafe-inline'; object-src 'none'";
     add_header "X-Content-Security-Policy" "default-src 'self' 'unsafe-inline'";
 
     location / {
         resolver 127.0.0.11;
-        # Passing Request Headers
-        # https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
         #set $upstream_endpoint http://${FLASK_API}:${FLASK_API_PORT};
         set $upstream_endpoint http://flask_api;
+
+        proxy_set_header        Host $host;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+
         proxy_pass $upstream_endpoint:5000$request_uri;
     }
 
