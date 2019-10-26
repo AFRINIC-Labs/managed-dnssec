@@ -139,21 +139,22 @@ def getServerHitCount():
 
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    mysql_host = db.Column(db.String(80), nullable=False)
-    mysql_db = db.Column(db.String(80), nullable=False)
-    mysql_user = db.Column(db.String(80), nullable=False)
-    mysql_password = db.Column(db.String(80), nullable=False)
-    mysql_container = db.Column(db.String(80), unique=True, nullable=False)
+    mysql_host = db.Column(db.String(100), nullable=False)
+    mysql_db = db.Column(db.String(100), nullable=False)
+    mysql_user = db.Column(db.String(100), nullable=False)
+    mysql_password = db.Column(db.String(100), nullable=False)
+    mysql_root_password = db.Column(db.String(100), nullable=False)
+    mysql_container = db.Column(db.String(100), unique=True, nullable=False)
     mysql_server_id = db.Column(db.Integer, unique=True, index=True, nullable=False)
-    mysql_repliation_user = db.Column(db.String(80), nullable=False)
-    mysql_replication_password = db.Column(db.String(80), nullable=False)
-    pdns_container = db.Column(db.String(80), unique=True, nullable=False)
-    pdns_volume = db.Column(db.String(80), unique=True, nullable=False)
-    api_key = db.Column(db.String(80), nullable=False)
+    mysql_repliation_user = db.Column(db.String(100), nullable=False)
+    mysql_replication_password = db.Column(db.String(100), nullable=False)
+    pdns_container = db.Column(db.String(100), unique=True, nullable=False)
+    pdns_volume = db.Column(db.String(100), unique=True, nullable=False)
+    api_key = db.Column(db.String(100), nullable=False)
     api_port = db.Column(db.Integer, unique=True, index=True, nullable=False)
     dns_port = db.Column(db.Integer, unique=True, nullable=False)
-    namespace = db.Column(db.String(80), unique=True, index=True, nullable=False)
-    network = db.Column(db.String(80), unique=True, index=True, nullable=False)
+    namespace = db.Column(db.String(100), unique=True, index=True, nullable=False)
+    network = db.Column(db.String(100), unique=True, index=True, nullable=False)
     enabled = db.Column(db.Boolean, default=False, nullable=False)
     stack = db.Column(db.Boolean, default=False, nullable=False)
     created = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
@@ -460,28 +461,30 @@ def create_customer(orgId):
         }
 
         repl_data = {}
-        mysql_host = "DB_HOST_" + namespace
-        mysql_db = "DB_NAME_" + namespace.replace("-", "_")
+
+        mysql_host = "DBH_" + namespace
+        mysql_db = "DB_" + namespace.replace("-", "_")
         mysql_db = mysql_db.lower()
-        mysql_user = "DB_USER_" + namespace
-        mysql_container = "MYSQL_CONTAINER_" + namespace
-        mysql_repl_user = "REPL_DB_USER_" + namespace
+        mysql_user = "DBU_" + namespace
+        mysql_container = "MCONT_" + namespace
+        mysql_repl_user = "RDBU_" + namespace
 
         #replication_user = "rep_" + namespace
         repl_data['user'] = mysql_repl_user
         repl_data['password'] = mysql_replication_password
 
-        pdns_container = "PDNS_CONTAINER_" + namespace
-        pdns_service = "PDNS_SERVICE_" + namespace
-        mysql_container_volume = "MYSQL_CONTAINER_VOLUME_" + namespace
+        pdns_container = "PCONT_" + namespace
+        pdns_service = "PSRV_" + namespace
+        mysql_container_volume = "MCONT_VOLUME_" + namespace
 
-        network = "NETWORK_" + namespace
+        network = "NET_" + namespace
 
         customer = Customer(
             mysql_host = mysql_host,
             mysql_db = mysql_db,
             mysql_user = mysql_user,
             mysql_password = mysql_password,
+            mysql_root_password = mysql_root_password,
             mysql_container =  mysql_container,
             mysql_server_id =  customer_id,
             mysql_repliation_user = mysql_repl_user,
@@ -591,7 +594,6 @@ def configure_slave(channel, repl, port=3306):
             if channel == row['CHANNEL_NAME']:
                 running = True
                 break
-
         # run query
         if not running:
             query_change = text('CHANGE MASTER TO MASTER_HOST="' + repl["host"] +'", MASTER_USER="' + repl["user"] + '", MASTER_PASSWORD="' + repl["password"] + '", MASTER_PORT='+ str(port) +', MASTER_AUTO_POSITION = 1 FOR CHANNEL "' + channel + '"')
@@ -604,9 +606,9 @@ def configure_slave(channel, repl, port=3306):
     except Exception as err:
         raise err
 
-"""
-# Request from Amreesh to disable this one (20191001)
 
+# Request from Amreesh to disable this one (Amreesh-20191001)
+# Enable mdnssec db replication to test mysql slave server avilability (Alfred-20191025)
 # Force management database creation on slave, then start replication
 try:
     # Add Management database for slave replication
@@ -620,7 +622,6 @@ try:
     configure_slave(REPLICATION_CHANNEL, management_db, 3306)
 except Exception as err:
     raise err
-"""
 
 # Url prefix
 # https://stackoverflow.com/questions/18967441/add-a-prefix-to-all-flask-routes
