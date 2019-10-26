@@ -73,7 +73,7 @@ MYSQL_ROOT_PASSWORD=<random_string>
 REPLICATION_USER=repl_api
 REPLICATION_PASS=<random_string>
 REPLICATION_SERVER=mysql_replication_db
-REPLICATION_CHANNEL=stack_api
+REPLICATION_CHANNEL=STACK_API
 
 SERVER_ID=4294967285
 # max 4294967295
@@ -100,9 +100,9 @@ Variables starting by **REPLICATION_** are related to MySQL slave instance (mult
 
 **SERVER_ID** is used by the MySQL multi-source replication process to identify each MySQL instance.
 
-Variables starting by **PDNS_** are related to PowerDNS (DNSSEC signer). **PDNS_DNS_PORT** is the starting DNS port for all signer instances (one per AFRINIC member). **PDNS_API_PORT** is the starting API HTTP port for all signer instances (one per AFRINIC member). Those numbers can be changed, but note that the `stack_api` is listening on port `5005` and the local registry on port `5000`.
+Variables starting by **PDNS_** are related to PowerDNS (DNSSEC signer). **PDNS_DNS_PORT** is the starting DNS port for all signer instances (one per AFRINIC member). **PDNS_API_PORT** is the starting API HTTP port for all signer instances (one per AFRINIC member). Those numbers can be changed, but note that the `STACK_API` is listening on port `5005` and the local registry on port `5000`.
 
-**FOLDER_PATH** is used by the `stack_api` to store generated **docker-compose.yml** file.
+**FOLDER_PATH** is used by the `STACK_API` to store generated **docker-compose.yml** file.
 
 **ENV_BASE_FILE** is the environment template file that is used to generate custom and unique **.env**. This **.env** file will be read by corresponding **docker-compose.yml** file.
 
@@ -110,9 +110,9 @@ Variables starting by **PDNS_** are related to PowerDNS (DNSSEC signer). **PDNS_
 
 **COMPOSE_BASE_FILE** is the template that is used to generate custom and unique **docker-compose.yml** file per AFRINIC member while deploying their DNSSEC signing stack. The **docker-compose.yml** file name is predefined with **COMPOSE_FILE** variable.
 
-The API base url is dedinied in **API_BASE**. This base url can be changed which different version of the `stack_api`.
+The API base url is dedinied in **API_BASE**. This base url can be changed which different version of the `STACK_API`.
 
-**TOKEN** is the HTTP authentication header to protect access to the `stack_api`.
+**TOKEN** is the HTTP authentication header to protect access to the `STACK_API`.
 
 **APP_ENV** is related to Flask deployment mode.
 
@@ -151,7 +151,7 @@ curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fq
 }
 
 ```
-8. Test `stack_api`
+8. Test `STACK_API`
 ```
 curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fqdn>/api/v1/stack
 
