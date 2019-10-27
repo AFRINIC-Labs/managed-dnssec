@@ -23,7 +23,7 @@ The `stack` folder is used by the `STACK_API` to deploy AFRINIC member DNSSEC si
 ### Access ###
 * Management API **http**: the API is listening on port ~~`5005`~~  `443`. The local registry is listening on port `5000`.
 * Signer Stack API **http**: each member signer (PowerDNS) API will use a dedicated port starting `30000`.
-* **dns**: each member signer will use a dedicated port starting `8000`.
+* **dns**: each member signer will use a dedicated port starting `40000`.
 
 
 | Action                             | HTTP Verb           | Parameters            | Required authentication | Url                                     | Result                                   | 
@@ -78,7 +78,7 @@ REPLICATION_CHANNEL=STACK_API
 SERVER_ID=4294967285
 # max 4294967295
 
-PDNS_DNS_PORT=8000
+PDNS_DNS_PORT=40000
 PDNS_API_PORT=30000
 FOLDER_PATH=/data/stack/
 ENV_BASE_FILE=env.txt
@@ -173,7 +173,7 @@ curl -s -k -L -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fqd
   "output": {
     "api_key": "Unjrbbji6howwDU",
     "api_port": 30001,
-    "dns_port": 8001,
+    "dns_port": 40001,
     "stack": "ORG-AFNC1-AFRINIC_S1",
     "url": "curl -v -H 'X-API-Key: Unjrbbji6howwDU' https://<swarm_manager_ip_or_fqdn>:30001/api/v1/servers/localhost"
   },
@@ -215,7 +215,7 @@ curl -s -k -L  -X POST -H 'X-Auth-Token: TOKEN'  https://<swarm_manager_ip_or_fq
   "output": {
     "api_key": "Unjrbbji6howwDU",
     "api_port": 30001,
-    "dns_port": 8001,
+    "dns_port": 40001,
     "stack": "ORG-AFNC1-AFRINIC_S1",
     "url": "curl -v -H 'X-API-Key: Unjrbbji6howwDU' http://<swarm_manager_ip_or_fqdn>:30001/api/v1/servers/localhost"
   },
